@@ -2,7 +2,3 @@
 . ./prepare
 
 docker-compose up --build
-
-# ./command /var/www/html/setup
-# docker exec miwebprojects_web_1 "cd /var/www/html && composer install"
-# ./command apache2-foreground

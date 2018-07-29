@@ -15,7 +15,7 @@ var MIWeb = MIWeb || {};
 
 MIWeb.CurveEditor = function(container, curve, options, maximize) {
 	var config = {
-		dotSize: 3,
+		dotSize: 5,
 		drawAxes: true,
 		drawGrid: true,
 		drawHandles: true,
@@ -159,26 +159,30 @@ MIWeb.CurveEditor.prototype.draw = function() {
 		};
 		svg.onmousemove = function(e) {
 			if(e.buttons && e.button === 0 && editor.grabbed) {
-				var x = e.pageX - editor.container.offsetLeft;
-				var y = e.pageY - editor.container.offsetTop;
+				//var x = e.pageX - editor.container.offsetLeft;
+				//var y = e.pageY - editor.container.offsetTop;
 				//x -= editor.curveContext.offset.x;
 				//y = (editor.curveContext.canvasSize.y - y) - editor.curveContext.offset.y;
-				x /= editor.curveContext.pxPerUnit;
-				y /= editor.curveContext.pxPerUnit;
-				
+				//x /= editor.curveContext.pxPerUnit;
+				//y /= editor.curveContext.pxPerUnit;
+				//var x = e.clientX / editor.curveContext.pxPerUnit / editor.curveContext.scale.x;
+				//var y = e.clientY / editor.curveContext.pxPerUnit / editor.curveContext.scale.y;
+				var x = e.movementX / editor.curveContext.pxPerUnit / editor.curveContext.scale.x;
+				var y = -e.movementY / editor.curveContext.pxPerUnit / editor.curveContext.scale.y;
+
 				var frame = editor.curve.frames[editor.grabbed[0]];
 				if(editor.grabbed[1] == 0) {
-					frame.point.x = x;
-					frame.point.y = y;
+					frame.point.x += x;
+					frame.point.y += y;
 				} else {
-					x -= frame.point.x;
-					y -= frame.point.y;
+					//x -= frame.point.x;
+					//y -= frame.point.y;
 					if(editor.grabbed[1] == 1) {
-						frame.controlLeft.x = x;
-						frame.controlLeft.y = y;
+						frame.controlLeft.x += x;
+						frame.controlLeft.y += y;
 					} else if(editor.grabbed[1] == 2) {
-						frame.controlRight.x = x;
-						frame.controlRight.y = y;
+						frame.controlRight.x += x;
+						frame.controlRight.y += y;
 					}
 				}
 				
@@ -322,7 +326,6 @@ MIWeb.CurveEditor.prototype.renderBackground = function(axes,grid) {
 	}
 	
 	var scale = this.curveContext.scale;
-	var offset = this.curveContext.offset;
 	var canvasSize = this.curveContext.canvasSize;
 	var bounds = this.curveContext.fullBounds;
 	var ppu = this.curveContext.pxPerUnit;
@@ -339,14 +342,25 @@ MIWeb.CurveEditor.prototype.renderBackground = function(axes,grid) {
 	}
 	
 	var canvas = '';
+
+    var size = {
+        x: this.curveContext.canvasSize.x / ppu,
+        y: this.curveContext.canvasSize.y / ppu
+    };
+	var gridBounds = {
+		min: {
+			x: bounds.min.x - size.x,
+			y: bounds.min.y - size.y
+		},
+		max: {
+			x: bounds.min.x + size.x * 3,
+			y: bounds.min.y + size.y * 3
+		}
+	};
 	
 	if(axes) {
-		var size = {
-			x: this.curveContext.canvasSize.x / ppu,
-			y: this.curveContext.canvasSize.y / ppu
-		};
-		canvas += '<path d="M 0 ' + (bounds.min.y - size.y) + ' L 0 ' + (bounds.min.y + size.y * 3) + '" stroke-width="' + (this.config.axesWeight / ppu) + '" stroke="' + this.config.gridColor + '" />';
-		canvas += '<path d="M ' + (bounds.min.x - size.x) + ' 0 L ' + (bounds.min.x + size.x * 3) + ' 0" stroke-width="' + (this.config.axesWeight / ppu) + '" stroke="' + this.config.gridColor + '" />';
+		canvas += '<path d="M 0 ' + gridBounds.min.y + ' L 0 ' + gridBounds.max.y + '" stroke-width="' + (this.config.axesWeight / ppu) + '" stroke="' + this.config.gridColor + '" />';
+		canvas += '<path d="M ' + gridBounds.min.x + ' 0 L ' + gridBounds.max.x + ' 0" stroke-width="' + (this.config.axesWeight / ppu) + '" stroke="' + this.config.gridColor + '" />';
 	}
 	
 	if(grid) {
@@ -365,25 +379,32 @@ MIWeb.CurveEditor.prototype.renderBackground = function(axes,grid) {
 		
 		var gridCountX = canvasSize.x / (gridSize.x * ppu);
 		var gridCountY = canvasSize.y / (gridSize.y * ppu);
-		var gridStartX = -Math.floor(ppu / gridSize.x);
-		var gridStartY = -Math.floor(ppu / gridSize.y);
 		
-		for(var g = gridStartX; g < gridCountX - gridStartX; g++) {
-			var x = g * gridSize.x * ppu;
+		for(var g = 0; g < gridCountX; g++) {
+			var x = g * gridSize.x * scale.x;
 			if(g != 0) {
-				canvas += '<path d="M ' + x + ' 0 L ' + x + ' ' + canvasSize.y + '" stroke-width="' + (this.config.gridWeight / ppu) + '" stroke="' + this.config.gridColor + '" />';
+				canvas += '<path d="M ' + x + ' ' + gridBounds.min.y + ' L ' + x + ' ' + gridBounds.max.y + '" stroke-width="' + (this.config.gridWeight / ppu) + '" stroke="' + this.config.gridColor + '" />';
 			}
-			canvas += '<text x="' + (x + 5) + '" y="' + (canvasSize.y) + '" fill="' + this.config.gridColor + '">' + (Math.round(g * gridSize.x * 100) / 100) + '</text>';
+			canvas += '<text x="' + (x + 5 / ppu) + '" y="' + (5 / ppu) + '" fill="' + this.config.gridColor + '"  font-size="' + (16 / ppu) + '" transform="scale(1,-1)">' + (Math.round(g * gridSize.x * 100) / 100) + '</text>';
 		}
+
+        for(var g = 0; g < gridCountY; g++) {
+            if(g == 0) {
+                continue;
+            }
+            var y = g * gridSize.y * scale.y;
+            canvas += '<path d="M ' + gridBounds.min.x + ' ' + y + ' L ' + gridBounds.max.x + ' ' + y + '" stroke-width="' + (this.config.gridWeight / ppu) + '" stroke="' + this.config.gridColor + '" />';
+            canvas += '<text x="' + (5 / ppu) + '" y="' + (-y + 5 / ppu) + '" fill="' + this.config.gridColor + '"  font-size="' + (16 / ppu) + '" transform="scale(1,-1)">' + (Math.round(g * gridSize.y * 100) / 100) + '</text>';
+        }
 		
-		for(var g = gridStartY; g < gridCountY - gridStartY; g++) {
+		/*for(var g = gridStartY; g < gridCountY - gridStartY; g++) {
 			if(g == 0) {
 				continue;
 			}
 			var y = canvasSize.y - (g * gridSize.y * ppu);
 			canvas += '<path d="M 0 ' + y + ' L ' + canvasSize.x + ' ' + y + '" stroke-width="' + (this.config.gridWeight / ppu) + '" stroke="' + this.config.gridColor + '" />';
 			canvas += '<text x="' + 0 + '" y="' + (y - 10) + '" fill="' + this.config.gridColor + '">' + (Math.round(g * gridSize.y * 100) / 100) + '</text>';
-		}
+		}*/
 	}
 	
 	this.background.innerHTML = canvas;
