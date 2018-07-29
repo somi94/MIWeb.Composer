@@ -3,6 +3,8 @@ MIWeb.Composer is a browser based audio synthesizing project.
 It's targeted to be a open, free and easy to use tool to synthesize audio samples and compose tracks from it.
 At the current state of development only the synthesizer is available.
 
+Feel free to use and improve the tool. Pull requests are welcome.
+
 ## Setup
 I will alway try to keep the application client based, 
 so downloading the app directory and opening the index.html in a modern browser will be enough to run it.
