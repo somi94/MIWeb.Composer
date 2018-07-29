@@ -1,0 +1,90 @@
+.keyboard {
+	height: 300px;
+	position: relative;
+}
+
+.keyboard , .keyboard  * {
+	box-sizing: border-box;
+}
+
+.keyboard .keys,
+.keyboard .controls {
+	float: left;
+}
+
+.keyboard .keys {
+	height: 100%;
+	position: relative;
+	width: 80%;
+}
+
+.keyboard .keys .key {
+	background-color: #fff;
+	border: 1px solid #aaa;
+	border-radius: 0px 0px 10px 10px;
+	color: #000;
+	cursor: pointer;
+	text-align: center;
+}
+
+.keyboard .keys .key:hover,
+.keyboard .keys .key.active {
+	background-color: #eee;
+}
+
+.keyboard .keys .key.sharp {
+	background-color: #222;
+	border: 1px solid #000;
+	border-bottom: 0;
+	border-top: 0;
+	color: #fff;
+}
+
+.keyboard .keys .key.sharp:hover,
+.keyboard .keys .key.sharp.active  {
+	background-color: #111;
+}
+
+.keyboard .keys .key label {
+	bottom: 10px;
+	cursor: pointer;
+	display: block;
+	left: 0;
+	position: absolute;
+	right: 0;
+	text-align: center;
+}
+
+.keyboard .keys .key.active label {
+	font-weight: bold;
+}
+
+.keyboard .controls {
+	padding: 0 10px;
+	width: 20%;
+}
+
+.keyboard .controls > div {
+	background-color: #ccc;
+	margin-bottom: 10px;
+	padding: 5px;
+	position: relative;
+}
+
+.keyboard .controls > div label {
+	display: block;
+	margin-bottom: 5px;
+}
+
+.keyboard .controls > div label,
+.keyboard .controls > div input {
+	/*display: inline-block;
+	float: left;
+	width: 50%;*/
+}
+
+.keyboard .controls > div span {
+	position: absolute;
+	right: 8px;
+	top: 5px;
+}

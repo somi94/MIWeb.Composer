@@ -1,0 +1,13 @@
+version: '3.3'
+services:
+  web:
+    build:
+      context: ./services/web
+      labels:
+        com.miweb.container_name: ${WEB_NAME}
+    image: ${WEB_NAME}
+    ports:
+      - "${WEB_PORT}:80"
+    volumes:
+      - ./app:/var/www/html
+    env_file: .env
