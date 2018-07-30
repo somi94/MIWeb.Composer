@@ -1,5 +1,4 @@
 //TODO:
-//solve drag&drop bug on scrolled window
 //solve auto resizing window behaviour while dragging (zoom levels (=steps)?)
 //auto select frame on drag start
 //add/remove frames
@@ -254,10 +253,6 @@ MIWeb.CurveEditor.prototype.setupCurveContext = function() {
 			this.curveContext.bounds.max.y = Math.max(this.curveContext.bounds.max.y, frame.point.y);
 		}
 	}
-	this.curveContext.fullBounds.center.x = this.curveContext.fullBounds.min.x + this.curveContext.fullBounds.size.x / 2;
-	this.curveContext.fullBounds.center.y = this.curveContext.fullBounds.min.y + this.curveContext.fullBounds.size.y / 2;
-	this.curveContext.bounds.center.x = this.curveContext.bounds.min.x + this.curveContext.bounds.size.x / 2;
-	this.curveContext.bounds.center.y = this.curveContext.bounds.min.y + this.curveContext.bounds.size.y / 2;
 	
 	//var sizeX = this.curve.end == 'ping-pong-xy' ? 4 : (this.curve.end ? 2 : 1);
 	//var sizeY = this.curve.end == 'ping-pong-y' || this.curve.end == 'ping-pong-xy' ? 2 : 1
@@ -270,10 +265,28 @@ MIWeb.CurveEditor.prototype.setupCurveContext = function() {
 		this.curveContext.bounds.max.y = extentsY;
 	}
 	
+	var padding = {
+		x: (this.curveContext.fullBounds.max.x - this.curveContext.fullBounds.min.x) * 0.1 || 0.1,
+		y: (this.curveContext.fullBounds.max.y - this.curveContext.fullBounds.min.y) * 0.1 || 0.1,
+	};
+	this.curveContext.fullBounds.min.x -= padding.x;
+	this.curveContext.fullBounds.max.x += padding.x;
+	this.curveContext.fullBounds.min.y -= padding.y;
+	this.curveContext.fullBounds.max.y += padding.y;
+	this.curveContext.bounds.min.x -= padding.x;
+	this.curveContext.bounds.max.x += padding.x;
+	this.curveContext.bounds.min.y -= padding.y;
+	this.curveContext.bounds.max.y += padding.y;
+	
 	this.curveContext.fullBounds.size.x = (this.curveContext.fullBounds.max.x - this.curveContext.fullBounds.min.x)/* * sizeX*/;
 	this.curveContext.fullBounds.size.y = (this.curveContext.fullBounds.max.y - this.curveContext.fullBounds.min.y)/* * sizeY*/;
 	this.curveContext.bounds.size.x = (this.curveContext.bounds.max.x - this.curveContext.bounds.min.x)/* * sizeX*/;
 	this.curveContext.bounds.size.y = (this.curveContext.bounds.max.y - this.curveContext.bounds.min.y)/* * sizeY*/;
+	
+	this.curveContext.fullBounds.center.x = this.curveContext.fullBounds.min.x + this.curveContext.fullBounds.size.x / 2;
+	this.curveContext.fullBounds.center.y = this.curveContext.fullBounds.min.y + this.curveContext.fullBounds.size.y / 2;
+	this.curveContext.bounds.center.x = this.curveContext.bounds.min.x + this.curveContext.bounds.size.x / 2;
+	this.curveContext.bounds.center.y = this.curveContext.bounds.min.y + this.curveContext.bounds.size.y / 2;
 	
 	this.curveContext.pxPerUnit = Math.min(
 		this.curveContext.canvasSize.x / (this.curveContext.fullBounds.size.x/* * 1.2*/ || 1),
@@ -289,6 +302,8 @@ MIWeb.CurveEditor.prototype.setupCurveContext = function() {
 		this.curveContext.scale.x = Math.min(this.curveContext.scale.x,this.curveContext.scale.y);
 		this.curveContext.scale.y = this.curveContext.scale.x;
 	}
+	
+	console.log(this.curveContext);
 };
 MIWeb.CurveEditor.prototype.renderCanvas = function() {
 	this.canvas = this.container.querySelector('svg [data-id="canvas"]');
@@ -311,9 +326,9 @@ MIWeb.CurveEditor.prototype.renderCanvas = function() {
 	var bounds = this.curveContext.fullBounds;
 	var scale = this.curveContext.scale;
 	var ppu = this.curveContext.pxPerUnit;
-	var padding = Math.floor(ppu / 4);
+	var padding = /*Math.floor(ppu / 4)*/0;
 	this.canvas.setAttribute('transform','translate(' + 
-		((bounds.min.x) * ppu + padding) + ' ' + 
+		(/*canvasSize.x / 2 + */(bounds.max.x - (bounds.max.x - bounds.min.x) * 0.5) * (ppu - padding)) + ' ' + 
 		(canvasSize.y / 2 + (bounds.max.y - (bounds.max.y - bounds.min.y) * 0.5) * (ppu - padding)) +
 	') scale(' +
 		(ppu - padding) + ' ' +
@@ -349,12 +364,12 @@ MIWeb.CurveEditor.prototype.renderBackground = function(axes,grid) {
     };
 	var gridBounds = {
 		min: {
-			x: bounds.min.x - size.x,
-			y: bounds.min.y - size.y
+			x: bounds.min.x/* - size.x*/,
+			y: bounds.min.y/* - size.y*/
 		},
 		max: {
-			x: bounds.min.x + size.x * 3,
-			y: bounds.min.y + size.y * 3
+			x: bounds.min.x + size.x,
+			y: bounds.min.y + size.y
 		}
 	};
 	
@@ -385,16 +400,16 @@ MIWeb.CurveEditor.prototype.renderBackground = function(axes,grid) {
 			if(g != 0) {
 				canvas += '<path d="M ' + x + ' ' + gridBounds.min.y + ' L ' + x + ' ' + gridBounds.max.y + '" stroke-width="' + (this.config.gridWeight / ppu) + '" stroke="' + this.config.gridColor + '" />';
 			}
-			canvas += '<text x="' + (x + 5 / ppu) + '" y="' + (5 / ppu) + '" fill="' + this.config.gridColor + '"  font-size="' + (16 / ppu) + '" transform="scale(1,-1)">' + (Math.round(g * gridSize.x * 100) / 100) + '</text>';
+			canvas += '<text x="' + (x + 5 / ppu) + '" y="' + (-10 / ppu) + '" fill="' + this.config.gridColor + '"  font-size="' + (16 / ppu) + '" transform="scale(1,-1)">' + (Math.round(x / scale.x * 10) / 10) + '</text>';
 		}
 
         for(var g = 0; g < gridCountY; g++) {
             if(g == 0) {
                 continue;
             }
-            var y = g * gridSize.y * scale.y;
+            var y = g * gridSize.y * scale.y + gridBounds.min.y;
             canvas += '<path d="M ' + gridBounds.min.x + ' ' + y + ' L ' + gridBounds.max.x + ' ' + y + '" stroke-width="' + (this.config.gridWeight / ppu) + '" stroke="' + this.config.gridColor + '" />';
-            canvas += '<text x="' + (5 / ppu) + '" y="' + (-y + 5 / ppu) + '" fill="' + this.config.gridColor + '"  font-size="' + (16 / ppu) + '" transform="scale(1,-1)">' + (Math.round(g * gridSize.y * 100) / 100) + '</text>';
+            canvas += '<text x="' + (5 / ppu) + '" y="' + (-y - 10 / ppu) + '" fill="' + this.config.gridColor + '"  font-size="' + (16 / ppu) + '" transform="scale(1,-1)">' + (Math.round(y / scale.y * 10) / 10) + '</text>';
         }
 		
 		/*for(var g = gridStartY; g < gridCountY - gridStartY; g++) {
@@ -473,6 +488,7 @@ MIWeb.CurveEditor.prototype.renderCurve = function(frames) {
 			
 			if(this.config.dragable && dragable[d].hasAttribute("data-grab")) {
 				dragable[d].onmousedown = function(e) {
+					editor.selected = e.target.getAttribute("data-frame");
 					editor.grabbed = [e.target.getAttribute("data-frame"),e.target.getAttribute("data-grab")];
 				};
 			}
