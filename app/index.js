@@ -23,7 +23,7 @@ var wave = new MIWeb.Curve(frames, 'loop');*/
 
 //initialize the synthesizer
 var synth = new MIWeb.Audio.Synthesizer();
-synth.debug = true;
+synth.debug = false;
 
 //initialize the wav writer
 var wavWriter = new MIWeb.Audio.WAVWriter();
@@ -41,11 +41,38 @@ var keyboard = new MIWeb.Audio.UI.Keyboard(container.querySelector(".keyboard"),
 
 //play function: updates synthesizer & plays the sound
 function play() {
+	var timer = (new Date).valueOf();
+		
 	synth.setVolume(container.querySelector(".volume").value / 100);
 	synth.setDuration(parseFloat(container.querySelector(".duration").value));
 
-	var src = wavWriter.write(synth.generate());
+	var src = '';
+	var local = false;
+	if(local) {
+		console.log("prepared (" + ((new Date).valueOf() - timer) + "ms)");
+		var data = synth.generate();
+		console.log("generated (" + ((new Date).valueOf() - timer) + "ms)");
+		src = wavWriter.write(data);
+		console.log("written (" + ((new Date).valueOf() - timer) + "ms)");
+		/*audio.onended = function() {
+			console.log("ended");
+		};*/
+	} else {
+		/*var json = JSON.stringify(synth);
+		json = json.replace('"frames"','"f"');
+		json = json.replace('"point"','"p"');
+		json = json.replace('"controlLeft"','"l"');
+		json = json.replace('"controlRight"','"r"');
+		console.log(json);*/
+		var setup = btoa(JSON.stringify(synth));
+		console.log(setup);
+		src = 'synth/' + setup + '.wav';
+	}
+	
 	var audio = new Audio(src);
+	audio.onplay = function() {
+		console.log("played (" + ((new Date).valueOf() - timer) + "ms)");
+	};
 	audio.play();
 }
 

@@ -1,6 +1,5 @@
 //TODO:
 //solve auto resizing window behaviour while dragging (zoom levels (=steps)?)
-//auto select frame on drag start
 //add/remove frames
 //show full synth source(=config) (formatted json)
 //make synth source editable
@@ -234,35 +233,18 @@ MIWeb.CurveEditor.prototype.setupCurveContext = function() {
 				x: Math.max(frame.point.x, frame.point.x + frame.controlLeft.x, frame.point.x + frame.controlRight.x),
 				y: Math.max(frame.point.y, frame.point.y + frame.controlLeft.y, frame.point.y + frame.controlRight.y)
 			};
-			this.curveContext.bounds.min = {
-				x: frame.point.x,
-				y: frame.point.y
-			};
-			this.curveContext.bounds.max = {
-				x: frame.point.x,
-				y: frame.point.y
-			};
 		} else {
 			this.curveContext.fullBounds.min.x = Math.min(this.curveContext.fullBounds.min.x, frame.point.x, frame.point.x + frame.controlLeft.x, frame.point.x + frame.controlRight.x);
 			this.curveContext.fullBounds.max.x = Math.max(this.curveContext.fullBounds.max.x, frame.point.x, frame.point.x + frame.controlLeft.x, frame.point.x + frame.controlRight.x);
 			this.curveContext.fullBounds.min.y = Math.min(this.curveContext.fullBounds.min.y, frame.point.y, frame.point.y + frame.controlLeft.y, frame.point.y + frame.controlRight.y);
 			this.curveContext.fullBounds.max.y = Math.max(this.curveContext.fullBounds.max.y, frame.point.y, frame.point.y + frame.controlLeft.y, frame.point.y + frame.controlRight.y);
-			this.curveContext.bounds.min.x = Math.min(this.curveContext.bounds.min.x, frame.point.x);
-			this.curveContext.bounds.max.x = Math.max(this.curveContext.bounds.max.x, frame.point.x);
-			this.curveContext.bounds.min.y = Math.min(this.curveContext.bounds.min.y, frame.point.y);
-			this.curveContext.bounds.max.y = Math.max(this.curveContext.bounds.max.y, frame.point.y);
 		}
 	}
 	
-	//var sizeX = this.curve.end == 'ping-pong-xy' ? 4 : (this.curve.end ? 2 : 1);
-	//var sizeY = this.curve.end == 'ping-pong-y' || this.curve.end == 'ping-pong-xy' ? 2 : 1
 	if(this.curve.end == 'ping-pong-y' || this.curve.end == 'ping-pong-xy') {
 		var fullExtentsY = Math.max(Math.abs(this.curveContext.fullBounds.min.y), Math.abs(this.curveContext.fullBounds.max.y));
 		this.curveContext.fullBounds.min.y = -fullExtentsY;
 		this.curveContext.fullBounds.max.y = fullExtentsY;
-		var extentsY = Math.max(Math.abs(this.curveContext.bounds.min.y), Math.abs(this.curveContext.bounds.max.y));
-		this.curveContext.bounds.min.y = -extentsY;
-		this.curveContext.bounds.max.y = extentsY;
 	}
 	
 	var padding = {
@@ -273,25 +255,18 @@ MIWeb.CurveEditor.prototype.setupCurveContext = function() {
 	this.curveContext.fullBounds.max.x += padding.x;
 	this.curveContext.fullBounds.min.y -= padding.y;
 	this.curveContext.fullBounds.max.y += padding.y;
-	this.curveContext.bounds.min.x -= padding.x;
-	this.curveContext.bounds.max.x += padding.x;
-	this.curveContext.bounds.min.y -= padding.y;
-	this.curveContext.bounds.max.y += padding.y;
 	
 	this.curveContext.fullBounds.size.x = (this.curveContext.fullBounds.max.x - this.curveContext.fullBounds.min.x)/* * sizeX*/;
 	this.curveContext.fullBounds.size.y = (this.curveContext.fullBounds.max.y - this.curveContext.fullBounds.min.y)/* * sizeY*/;
-	this.curveContext.bounds.size.x = (this.curveContext.bounds.max.x - this.curveContext.bounds.min.x)/* * sizeX*/;
-	this.curveContext.bounds.size.y = (this.curveContext.bounds.max.y - this.curveContext.bounds.min.y)/* * sizeY*/;
 	
 	this.curveContext.fullBounds.center.x = this.curveContext.fullBounds.min.x + this.curveContext.fullBounds.size.x / 2;
 	this.curveContext.fullBounds.center.y = this.curveContext.fullBounds.min.y + this.curveContext.fullBounds.size.y / 2;
-	this.curveContext.bounds.center.x = this.curveContext.bounds.min.x + this.curveContext.bounds.size.x / 2;
-	this.curveContext.bounds.center.y = this.curveContext.bounds.min.y + this.curveContext.bounds.size.y / 2;
 	
-	this.curveContext.pxPerUnit = Math.min(
-		this.curveContext.canvasSize.x / (this.curveContext.fullBounds.size.x/* * 1.2*/ || 1),
-		this.curveContext.canvasSize.y / (this.curveContext.fullBounds.size.y/* * 1.2*/ || 1)
-	);
+	/*this.curveContext.pxPerUnit = Math.min(
+		this.curveContext.canvasSize.x / (this.curveContext.fullBounds.size.x || 1),
+		this.curveContext.canvasSize.y / (this.curveContext.fullBounds.size.y || 1)
+	);*/
+	this.curveContext.pxPerUnit = Math.min(this.curveContext.canvasSize.x,this.curveContext.canvasSize.y) / Math.max(this.curveContext.fullBounds.size.x, this.curveContext.fullBounds.size.y);
 	
 	this.curveContext.scale = {
 		x: this.curveContext.canvasSize.x > this.curveContext.canvasSize.y ? this.curveContext.canvasSize.x / this.curveContext.canvasSize.y : 1,
@@ -328,7 +303,7 @@ MIWeb.CurveEditor.prototype.renderCanvas = function() {
 	var ppu = this.curveContext.pxPerUnit;
 	var padding = /*Math.floor(ppu / 4)*/0;
 	this.canvas.setAttribute('transform','translate(' + 
-		(/*canvasSize.x / 2 + */(bounds.max.x - (bounds.max.x - bounds.min.x) * 0.5) * (ppu - padding)) + ' ' + 
+		(/*canvasSize.x / 2 + */(-bounds.min.x) * (ppu - padding)) + ' ' + 
 		(canvasSize.y / 2 + (bounds.max.y - (bounds.max.y - bounds.min.y) * 0.5) * (ppu - padding)) +
 	') scale(' +
 		(ppu - padding) + ' ' +
@@ -370,12 +345,16 @@ MIWeb.CurveEditor.prototype.renderBackground = function(axes,grid) {
 		max: {
 			x: bounds.min.x + size.x,
 			y: bounds.min.y + size.y
+		},
+		center: {
+			x: bounds.center.x,
+			y: bounds.center.y
 		}
 	};
 	
 	if(axes) {
-		canvas += '<path d="M 0 ' + gridBounds.min.y + ' L 0 ' + gridBounds.max.y + '" stroke-width="' + (this.config.axesWeight / ppu) + '" stroke="' + this.config.gridColor + '" />';
-		canvas += '<path d="M ' + gridBounds.min.x + ' 0 L ' + gridBounds.max.x + ' 0" stroke-width="' + (this.config.axesWeight / ppu) + '" stroke="' + this.config.gridColor + '" />';
+		canvas += '<path d="M 0 ' + (gridBounds.center.y - canvasSize.y / ppu / 2) + ' L 0 ' + (gridBounds.center.y + canvasSize.y / ppu / 2) + '" stroke-width="' + (this.config.axesWeight / ppu) + '" stroke="' + this.config.gridColor + '" />';
+		canvas += '<path d="M ' + (gridBounds.center.x - canvasSize.x / ppu / 2) * scale.x + ' 0 L ' + (gridBounds.center.x + canvasSize.x / ppu / 2) * scale.x + ' 0" stroke-width="' + (this.config.axesWeight / ppu) + '" stroke="' + this.config.gridColor + '" />';
 	}
 	
 	if(grid) {
@@ -392,24 +371,29 @@ MIWeb.CurveEditor.prototype.renderBackground = function(axes,grid) {
 		if(gridSizeDesired.x < gridSize.x * 0.75) gridSize.x /= 2;
 		if(gridSizeDesired.y < gridSize.y * 0.75) gridSize.y /= 2;
 		
-		var gridCountX = canvasSize.x / (gridSize.x * ppu);
-		var gridCountY = canvasSize.y / (gridSize.y * ppu);
+		var gridCountX = canvasSize.x / (gridSize.x * ppu) / scale.x + 2;
+		var gridCountY = canvasSize.y / (gridSize.y * ppu) / scale.y + 2;
+		var gridExtentX = Math.ceil(gridCountX / 2);
+		var gridExtentY = Math.ceil(gridCountY / 2);
+		var gridStartX = Math.floor(gridBounds.min.x / gridSize.x) * gridSize.x - gridSize.x;
+		//var gridStartX = Math.floor((gridBounds.center.x - (canvasSize.x / ppu / scale.x / 2)) / gridSize.x) * gridSize.x;
+		var gridStartY = Math.floor((gridBounds.center.y - (canvasSize.y / ppu / scale.y / 2)) / gridSize.y) * gridSize.y - gridSize.y;
 		
 		for(var g = 0; g < gridCountX; g++) {
-			var x = g * gridSize.x * scale.x;
-			if(g != 0) {
-				canvas += '<path d="M ' + x + ' ' + gridBounds.min.y + ' L ' + x + ' ' + gridBounds.max.y + '" stroke-width="' + (this.config.gridWeight / ppu) + '" stroke="' + this.config.gridColor + '" />';
+			var x = g * gridSize.x * scale.x + gridStartX * scale.x;
+			if(x != 0) {
+				canvas += '<path d="M ' + x + ' ' + (gridBounds.center.y - gridExtentY) + ' L ' + x + ' ' + (gridBounds.center.y + gridExtentY) + '" stroke-width="' + (this.config.gridWeight / ppu) + '" stroke="' + this.config.gridColor + '" />';
 			}
-			canvas += '<text x="' + (x + 5 / ppu) + '" y="' + (-10 / ppu) + '" fill="' + this.config.gridColor + '"  font-size="' + (16 / ppu) + '" transform="scale(1,-1)">' + (Math.round(x / scale.x * 10) / 10) + '</text>';
+			canvas += '<text x="' + (x + 5 / ppu) + '" y="' + (-10 / ppu) + '" fill="' + this.config.gridColor + '"  font-size="' + (16 / ppu) + '" transform="scale(1,-1)">' + (Math.round(x / scale.x * 100) / 100) + '</text>';
 		}
 
         for(var g = 0; g < gridCountY; g++) {
-            if(g == 0) {
+            var y = g * gridSize.y * scale.y + gridStartY * scale.y;
+            if(y == 0) {
                 continue;
             }
-            var y = g * gridSize.y * scale.y + gridBounds.min.y;
-            canvas += '<path d="M ' + gridBounds.min.x + ' ' + y + ' L ' + gridBounds.max.x + ' ' + y + '" stroke-width="' + (this.config.gridWeight / ppu) + '" stroke="' + this.config.gridColor + '" />';
-            canvas += '<text x="' + (5 / ppu) + '" y="' + (-y - 10 / ppu) + '" fill="' + this.config.gridColor + '"  font-size="' + (16 / ppu) + '" transform="scale(1,-1)">' + (Math.round(y / scale.y * 10) / 10) + '</text>';
+            canvas += '<path d="M ' + (gridBounds.center.x * scale.x - gridExtentX) + ' ' + y + ' L ' + (gridBounds.center.x * scale.x + gridExtentX) + ' ' + y + '" stroke-width="' + (this.config.gridWeight / ppu) + '" stroke="' + this.config.gridColor + '" />';
+            canvas += '<text x="' + (5 / ppu) + '" y="' + (-y - 10 / ppu) + '" fill="' + this.config.gridColor + '"  font-size="' + (16 / ppu) + '" transform="scale(1,-1)">' + (Math.round(y / scale.y * 100) / 100) + '</text>';
         }
 		
 		/*for(var g = gridStartY; g < gridCountY - gridStartY; g++) {

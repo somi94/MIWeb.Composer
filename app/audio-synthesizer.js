@@ -78,7 +78,7 @@ MIWeb.Audio.Synthesizer.prototype.generate = function() {
 	var t,f,a;
 	for(var s = 0; s < sampleCount; s++) {
 		t = s / sampleCount;
-		f = frequency * this.frequencyCurve.getValue(t);
+		//f = frequency * this.frequencyCurve.getValue(t);
 		f = frequency + (frequency * this.frequencyCurve.getValue(t));
 		a = this.amplitudeCurve.getValue(t);
 		data.push(
