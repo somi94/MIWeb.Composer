@@ -1,0 +1,13 @@
+RewriteEngine on
+
+RewriteCond %{REQUEST_URI} ^.*\.wav$
+RewriteRule ^(.*)\.wav$ /synth.php [L]
+
+RewriteCond %{REQUEST_URI} ^.*build.js$
+RewriteRule ^build.js$ /src.php?type=js [L]
+
+RewriteCond %{REQUEST_URI} ^.*build.css$
+RewriteRule ^build.css$ /src.php?type=css [L]
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^.*$ /build/index.html

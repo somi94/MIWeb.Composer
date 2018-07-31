@@ -1,0 +1,220 @@
+.curve {
+	background-color: #333;
+	display: inline-block;
+	position: relative;
+	width: 200px;
+	height: 50px;
+}
+
+.curve svg {
+	-webkit-touch-callout: none; /* iOS Safari */
+	-webkit-user-select: none; /* Safari */
+	 -khtml-user-select: none; /* Konqueror HTML */
+	   -moz-user-select: none; /* Firefox */
+		-ms-user-select: none; /* Internet Explorer/Edge */
+			user-select: none; /* Non-prefixed version, currently
+								  supported by Chrome and Opera */
+}
+
+.curve, .curve * {
+	box-sizing: border-box;
+}
+
+.curve .controls {
+	background-color: #fff;
+	bottom: 0;
+	left: 0;
+	position: absolute;
+}
+
+.curve .option {
+	display: inline-block;
+	max-width: 250px;
+	padding: 5px 15px;
+	position: relative;
+}
+
+.curve .option label {
+	display: inline-block;
+	width: 40%;
+}
+
+.curve .option input,
+.curve .option select {
+	text-align: center;
+	width: 60%;
+}
+
+.curve .option.vector2 input {
+	width: 30%;
+}
+
+.curve-window-controls {
+	display: inline-block; 
+	position: absolute; 
+	top: 0; 
+	right: 0;
+}
+
+.curve-popup {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+}
+
+.curve-popup .curve-popup-overlay {
+	background-color: rgba(0,0,0,0.5);
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+}
+
+.curve-popup .curve-popup-content {
+	position: fixed;
+	top: 5%;
+	bottom: 5%;
+	left: 5%;
+	right: 5%;
+	width: auto;
+	height: auto;
+}.keyboard {
+	height: 300px;
+	position: relative;
+}
+
+.keyboard , .keyboard  * {
+	box-sizing: border-box;
+}
+
+.keyboard .keys,
+.keyboard .controls {
+	float: left;
+}
+
+.keyboard .keys {
+	height: 100%;
+	position: relative;
+	width: 80%;
+}
+
+.keyboard .keys .key {
+	background-color: #fff;
+	border: 1px solid #aaa;
+	border-radius: 0px 0px 10px 10px;
+	color: #000;
+	cursor: pointer;
+	text-align: center;
+}
+
+.keyboard .keys .key:hover,
+.keyboard .keys .key.active {
+	background-color: #eee;
+}
+
+.keyboard .keys .key.sharp {
+	background-color: #222;
+	border: 1px solid #000;
+	border-bottom: 0;
+	border-top: 0;
+	color: #fff;
+}
+
+.keyboard .keys .key.sharp:hover,
+.keyboard .keys .key.sharp.active  {
+	background-color: #111;
+}
+
+.keyboard .keys .key label {
+	bottom: 10px;
+	cursor: pointer;
+	display: block;
+	left: 0;
+	position: absolute;
+	right: 0;
+	text-align: center;
+}
+
+.keyboard .keys .key.active label {
+	font-weight: bold;
+}
+
+.keyboard .controls {
+	padding: 0 10px;
+	width: 20%;
+}
+
+.keyboard .controls > div {
+	background-color: #ccc;
+	margin-bottom: 10px;
+	padding: 5px;
+	position: relative;
+}
+
+.keyboard .controls > div label {
+	display: block;
+	margin-bottom: 5px;
+}
+
+.keyboard .controls > div label,
+.keyboard .controls > div input {
+	/*display: inline-block;
+	float: left;
+	width: 50%;*/
+}
+
+.keyboard .controls > div span {
+	position: absolute;
+	right: 8px;
+	top: 5px;
+}.synth * {
+	box-sizing: border-box;
+}
+
+.synth h2 {
+	margin-top: 0;
+}
+
+.synth .info {
+	margin-bottom: 10px;
+}
+
+.synth > .row {
+	margin-bottom: 20px;
+}
+
+.synth .presets label {
+	width: 100px;
+}
+
+.synth .options input {
+	text-align: center;
+	width: 100%;
+}
+
+.synth .curves .curve-container {
+	background-color: #ccc;
+	padding: 10px;
+}
+
+.synth .curves > div label {
+	display: block;
+}
+
+.synth .curves > div .curve {
+	display: block;
+	width: 100%;
+}
+
+.synth .curves .presets {
+	margin-bottom: 10px;
+}
+
+.synth .interaction button {
+	display: block;
+	padding: 10px 0;
+	width: 100%;
+}

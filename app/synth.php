@@ -1,6 +1,11 @@
 <?php
-$file = $_SERVER['SCRIPT_FILENAME'];
-$config = preg_replace('/\.[\w\d]+$/','',$file);
+$file = $_SERVER['REQUEST_URI'];
+$file = explode('/',$file);
+$file = $file[count($file) - 1];
+
+$config = preg_replace('/\.[\w\d]+$/','', $file);
+$config = ltrim($config,"/");
+$config = str_replace(' ','+',$config);
 $config = base64_decode($config);
 $config = json_decode($config, true);
 
@@ -62,7 +67,7 @@ function get_curve_value($curve, $x) {
 				$frame['point'],
 				['x' => $frame['point']['x'] + $frame['controlRight']['x'], 'y' => $frame['point']['y'] + $frame['controlRight']['y']],
 				['x' => $nextFrame['point']['x'] + $nextFrame['controlLeft']['x'], 'y' => $nextFrame['point']['y'] + $nextFrame['controlLeft']['y']],
-				$nextFrame['point'];
+				$nextFrame['point']
 			];
 			$px = $x - $frame['point']['x'];
 			$tx = $px / ($nextFrame['point']['x'] - $frame['point']['x']);
@@ -132,25 +137,27 @@ function generate($data) {
 		$f = $frequency + ($frequency * get_curve_value($data['frequencyCurve'], $t));
 		$a = get_curve_value($data['amplitudeCurve'], $t);
 		
-		$v = 
+		$v = (int)(
 			$volume *
 			$a *
-			get_curve_value($data['wave'], ($s / $sampleRate) * $f)
-		;
-		
-		$result[$s << 1] = $v;
-		$result[($s << 1) + 1] = $v >> 8;
+			get_curve_value($data['wave'], ($s / $sampleRate) * $f) *
+			32768
+		);
+
+		$result[] = $v;
+		/*$result[$s << 1] = $v;
+		$result[($s << 1) + 1] = $v >> 8;*/
 	}
 	
 	$channels = 1;
-	$resultLength = count($result);
+	$resultLength = count($result) * 2;
 	$bitsPerSample = 16;
 	
 	return call_user_func_array("pack",
 		array_merge(array("VVVVVvvVVvvVVv*"),
 			array(//header
 				0x46464952, //RIFF
-				/*160038*/4 + (8 + 24) + (8 + 8),      //File size
+				/*160038*//*4 + (8 + 24) + (8 + 8)*/$resultLength * $channels * $bitsPerSample / 8 + 46,      //File size
 				0x45564157, //WAVE
 				0x20746d66, //"fmt " (chunk)
 				16, //chunk size
@@ -188,8 +195,11 @@ function generate($data) {
 
 header('Content-Description: File Transfer');
 header('Content-Transfer-Encoding: binary'); 
-header('Content-Type: audio/vnd.wave');
-header('Content-length: ' . filesize($filename));
+header('Content-Type: audio/x-wav');
+//header('Content-length: ' . 160038);
 //header('Content-Disposition: attachment;filename="sample.wav"');
 
-echo generate($config);
+$data = generate($config);
+foreach($data as $d) {
+	echo $d;
+}

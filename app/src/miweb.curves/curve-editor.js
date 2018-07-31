@@ -10,8 +10,9 @@
 //dont render everything again on draw, dont redraw on drag/input
 
 var MIWeb = MIWeb || {};
+MIWeb.Curves = MIWeb.Curves || {};
 
-MIWeb.CurveEditor = function(container, curve, options, maximize) {
+MIWeb.Curves.CurveEditor = function(container, curve, options, maximize) {
 	var config = {
 		dotSize: 5,
 		drawAxes: true,
@@ -58,14 +59,14 @@ MIWeb.CurveEditor = function(container, curve, options, maximize) {
 	this.minimized = !maximize;
 	this.setCurve(curve);
 };
-MIWeb.CurveEditor.prototype.setCurve = function(curve) {
+MIWeb.Curves.CurveEditor.prototype.setCurve = function(curve) {
 	this.curve = curve;
 	this.selected = -1;
 	this.lastSelected = -1;
 	this.grabbed = false;
 	this.draw();
 };
-MIWeb.CurveEditor.prototype.draw = function() {
+MIWeb.Curves.CurveEditor.prototype.draw = function() {
 	var editor = this;
 		
 	if(this.defaultConfig.minimizable && this.minimized && this.defaultConfig.minimizeOptions) {
@@ -192,7 +193,7 @@ MIWeb.CurveEditor.prototype.draw = function() {
 	
 	this.lastSelected = this.selected;
 };
-MIWeb.CurveEditor.prototype.setupCurveContext = function() {
+MIWeb.Curves.CurveEditor.prototype.setupCurveContext = function() {
 	var frameCount = this.curve.frames.length;
 	
 	this.curveContext = {
@@ -280,7 +281,7 @@ MIWeb.CurveEditor.prototype.setupCurveContext = function() {
 	
 	console.log(this.curveContext);
 };
-MIWeb.CurveEditor.prototype.renderCanvas = function() {
+MIWeb.Curves.CurveEditor.prototype.renderCanvas = function() {
 	this.canvas = this.container.querySelector('svg [data-id="canvas"]');
 	if(!this.canvas) {
 		var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -310,7 +311,7 @@ MIWeb.CurveEditor.prototype.renderCanvas = function() {
 		-(ppu - padding) +
 	')');
 };
-MIWeb.CurveEditor.prototype.renderBackground = function(axes,grid) {
+MIWeb.Curves.CurveEditor.prototype.renderBackground = function(axes,grid) {
 	if(!axes && !grid) {
 		return '';
 	}
@@ -408,7 +409,7 @@ MIWeb.CurveEditor.prototype.renderBackground = function(axes,grid) {
 	
 	this.background.innerHTML = canvas;
 };
-MIWeb.CurveEditor.prototype.renderCurve = function(frames) {
+MIWeb.Curves.CurveEditor.prototype.renderCurve = function(frames) {
 	var frames = this.getCurveFrames();
 	
 	this.frameViews = Array.apply(null, this.container.querySelectorAll('[data-id="frame"]'));
@@ -576,7 +577,7 @@ MIWeb.CurveEditor.prototype.renderCurve = function(frames) {
 		}
 	}
 };
-MIWeb.CurveEditor.prototype.renderControls = function() {
+MIWeb.Curves.CurveEditor.prototype.renderControls = function() {
 	this.controls = this.container.querySelector('.controls');
 	if(!this.controls) {
 		this.controls = document.createElement("div");
@@ -644,7 +645,7 @@ MIWeb.CurveEditor.prototype.renderControls = function() {
 		}
 	}
 };
-MIWeb.CurveEditor.prototype.renderWindowOptions = function() {
+MIWeb.Curves.CurveEditor.prototype.renderWindowOptions = function() {
 	this.windowOptions = this.container.querySelector('.curve-window-controls');
 	if(!this.windowOptions) {
 		this.windowOptions = document.createElement('div');
@@ -679,7 +680,7 @@ MIWeb.CurveEditor.prototype.renderWindowOptions = function() {
 		};
 	}
 };
-MIWeb.CurveEditor.prototype.getCurveFrames = function() {
+MIWeb.Curves.CurveEditor.prototype.getCurveFrames = function() {
 	if(!this.curve.frames || !this.curve.frames.length) {
 		return [];
 	}

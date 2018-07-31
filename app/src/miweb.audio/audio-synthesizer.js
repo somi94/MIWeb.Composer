@@ -2,9 +2,9 @@ var MIWeb = MIWeb || {};
 MIWeb.Audio = MIWeb.Audio || {};
 
 MIWeb.Audio.Synthesizer = function(wave, amplitude, frequency, note, octave, volume, duration, sampleRate) {
-	this.wave = wave || new MIWeb.Curve();
-	this.amplitudeCurve = amplitude || new MIWeb.Curve();
-	this.frequencyCurve = frequency || new MIWeb.Curve();
+	this.wave = wave || new MIWeb.Curves.Curve();
+	this.amplitudeCurve = amplitude || new MIWeb.Curves.Curve();
+	this.frequencyCurve = frequency || new MIWeb.Curves.Curve();
 	this.setNote(note || 'C');
 	this.setOctave(octave || 4);
 	this.setVolume(volume || 1);
@@ -38,9 +38,9 @@ MIWeb.Audio.Synthesizer.prototype.applyPreset = function(preset, property) {
 	}
 };
 MIWeb.Audio.Synthesizer.prototype.applyProperty = function(name, val) {
-	if((name == 'wave' || name == 'amplitudeCurve' || name == 'frequencyCurve') && !(val instanceof MIWeb.Curve)) {
+	if((name == 'wave' || name == 'amplitudeCurve' || name == 'frequencyCurve') && !(val instanceof MIWeb.Curves.Curve)) {
 		var tmp = val;
-		var val = new MIWeb.Curve();
+		var val = new MIWeb.Curves.Curve();
 		for(var p in tmp) {
 			val[p] = tmp[p];
 		}
@@ -143,41 +143,41 @@ MIWeb.Audio.Synthesizer.Waves = {
 
 MIWeb.Audio.Synthesizer.Presets = {
 	/*constant: {
-		wave: new MIWeb.Curve([
+		wave: new MIWeb.Curves.Curve([
 			{point: {x: 0, y: 1}, controlLeft: {x: 0, y: 0}, controlRight: {x: 0.25, y: 0}},
 			{point: {x: 1, y: 1}, controlLeft: {x: -0.25, y: 0}, controlRight: {x: 0, y: 0}}
 		], 'loop'),
-		frequencyCurve: new MIWeb.Curve([
+		frequencyCurve: new MIWeb.Curves.Curve([
 			{point: {x: 0, y: 0}, controlLeft: {x: 0, y: 0}, controlRight: {x: 0.25, y: 0}},
 			{point: {x: 1, y: 0}, controlLeft: {x: -0.25, y: 0}, controlRight: {x: 0, y: 0}}
 		], 'loop'),
-		amplitudeCurve: new MIWeb.Curve([
+		amplitudeCurve: new MIWeb.Curves.Curve([
 			{point: {x: 0, y: 1}, controlLeft: {x: 0, y: 0}, controlRight: {x: 0.25, y: 0}},
 			{point: {x: 1, y: 1}, controlLeft: {x: -0.25, y: 0}, controlRight: {x: 0, y: 0}}
 		], 'loop')
 	},*/
 	sine: {
-		wave: new MIWeb.Curve([
+		wave: new MIWeb.Curves.Curve([
 			{"point":{"x":0,"y":0},"controlLeft":{"x":0,"y":0},"controlRight":{"x":0.017,"y":0.1}},
 			{"point":{"x":0.25,"y":1},"controlLeft":{"x":-0.125,"y":0},"controlRight":{"x":0.125,"y":0}},
 			{"point":{"x":0.5,"y":0},"controlLeft":{"x":-0.017,"y":0.1},"controlRight":{"x":0,"y":0}}
 		], 'ping-pong-y'),
-		frequencyCurve: new MIWeb.Curve([
+		frequencyCurve: new MIWeb.Curves.Curve([
 			{point: {x: 0, y: 0}, controlLeft: {x: 0, y: 0}, controlRight: {x: 0.25, y: 0}},
 			{point: {x: 1, y: 0}, controlLeft: {x: -0.25, y: 0}, controlRight: {x: 0, y: 0}}
 		], 'loop'),
-		/*amplitudeCurve: new MIWeb.Curve([
+		/*amplitudeCurve: new MIWeb.Curves.Curve([
 			{point: {x: 0, y: 0}, controlLeft: {x: 0, y: 0}, controlRight: {x: 0.001, y: 0.5}},
 			{point: {x: 0.002, y: 1}, controlLeft: {x: -0.001, y: -0.5}, controlRight: {x: 0, y: 0}},
 			{point: {x: 1, y: 0}, controlLeft: {x: 0, y: 0}, controlRight: {x: 0, y: 0}}
 		], '')*/
-		amplitudeCurve: new MIWeb.Curve([
+		amplitudeCurve: new MIWeb.Curves.Curve([
 			{point: {x: 0, y: 1}, controlLeft: {x: 0, y: 0}, controlRight: {x: 0.25, y: 0}},
 			{point: {x: 1, y: 1}, controlLeft: {x: -0.25, y: 0}, controlRight: {x: 0, y: 0}}
 		], 'loop')
 	},
 	piano: {
-		wave: new MIWeb.Curve([
+		wave: new MIWeb.Curves.Curve([
 			{point: {x: 0, y: 0.0}, controlLeft: {x: 0, y: 0}, controlRight: {x: 0.015, y: 0.2}},
 			{point: {x: 0.1, y: 1}, controlLeft: {x: -0.05, y: 0}, controlRight: {x: 0.075, y: 0}},
 			{point: {x: 0.3, y: -0.35}, controlLeft: {x: -0.075, y: 0}, controlRight: {x: 0.075, y: 0}},
@@ -185,11 +185,11 @@ MIWeb.Audio.Synthesizer.Presets = {
 			{point: {x: 0.725, y: -1}, controlLeft: {x: -0.1, y: 0}, controlRight: {x: 0.15, y: 0}},
 			{point: {x: 1, y: 0.0}, controlLeft: {x: -0.015, y: -0.2}, controlRight: {x: 0, y: 0}},
 		],'loop'),
-		frequencyCurve: new MIWeb.Curve([
+		frequencyCurve: new MIWeb.Curves.Curve([
 			{point: {x: 0, y: 0}, controlLeft: {x: 0, y: 0}, controlRight: {x: 0.25, y: 0}},
 			{point: {x: 1, y: 0}, controlLeft: {x: -0.25, y: 0}, controlRight: {x: 0, y: 0}}
 		], 'loop'),
-		amplitudeCurve: new MIWeb.Curve([
+		amplitudeCurve: new MIWeb.Curves.Curve([
 			{point: {x: 0, y: 0}, controlLeft: {x: 0, y: 0}, controlRight: {x: 0.001, y: 0.5}},
 			{point: {x: 0.002, y: 1}, controlLeft: {x: -0.001, y: -0.5}, controlRight: {x: 0, y: -0.25}},
 			{point: {x: 1, y: 0}, controlLeft: {x: -0.25, y: 0}, controlRight: {x: 0, y: 0}}
@@ -197,7 +197,7 @@ MIWeb.Audio.Synthesizer.Presets = {
 		duration: 1.5
 	},
 	organ: {
-		wave: new MIWeb.Curve([
+		wave: new MIWeb.Curves.Curve([
 			{point: {x: 0, y: 0.225}, controlLeft: {x: 0, y: 0}, controlRight: {x: 0.02, y: 0.2}},
 			{point: {x: 0.1, y: 1}, controlLeft: {x: -0.05, y: 0}, controlRight: {x: 0.075, y: 0}},
 			{point: {x: 0.3, y: -0.35}, controlLeft: {x: -0.075, y: 0}, controlRight: {x: 0.075, y: 0}},
@@ -205,11 +205,11 @@ MIWeb.Audio.Synthesizer.Presets = {
 			{point: {x: 0.725, y: -1}, controlLeft: {x: -0.1, y: 0}, controlRight: {x: 0.15, y: 0}},
 			{point: {x: 1, y: 0.225}, controlLeft: {x: -0.02, y: -0.2}, controlRight: {x: 0, y: 0}},
 		],'loop'),
-		frequencyCurve: new MIWeb.Curve([
+		frequencyCurve: new MIWeb.Curves.Curve([
 			{point: {x: 0, y: 0}, controlLeft: {x: 0, y: 0}, controlRight: {x: 0.25, y: 0}},
 			{point: {x: 1, y: 0}, controlLeft: {x: -0.25, y: 0}, controlRight: {x: 0, y: 0}}
 		], 'loop'),
-		amplitudeCurve: new MIWeb.Curve([
+		amplitudeCurve: new MIWeb.Curves.Curve([
 			{"point":{"x":0,"y":0},"controlLeft":{"x":0,"y":0},"controlRight":{"x":0.001,"y":0.5}},
 			{"point":{"x":0.3527762863814007,"y":1},"controlLeft":{"x":-0.20118618037433356,"y":0.0010600706713781438},"controlRight":{"x":0.25,"y":0}},
 			{"point":{"x":1,"y":0},"controlLeft":{"x":-0.3593639575971731,"y":0.1176678445229682},"controlRight":{"x":0,"y":0}}
@@ -217,7 +217,7 @@ MIWeb.Audio.Synthesizer.Presets = {
 		duration: 2
 	},
 	violin: {
-		wave: new MIWeb.Curve([
+		wave: new MIWeb.Curves.Curve([
 			{"point":{"x":0,"y":0},"controlLeft":{"x":0,"y":0},"controlRight":{"x":0.04442438188144986,"y":0.014510486451557225}},
 			{"point":{"x":0.1,"y":-0.2},"controlLeft":{"x":-0.025,"y":0},"controlRight":{"x":0.0657243816254417,"y":0.000706713780918744}},
 			{"point":{"x":0.2,"y":0.9},"controlLeft":{"x":-0.06537102473498235,"y":0.00035335689045934426},"controlRight":{"x":0.06749116607773853,"y":0.0031802120141342094}},
@@ -230,18 +230,18 @@ MIWeb.Audio.Synthesizer.Presets = {
 			{"point":{"x":0.9,"y":-0.9},"controlLeft":{"x":-0.04000263808212723,"y":-0.003009116089418451},"controlRight":{"x":0.05628028317217271,"y":0.0026545851608344995}},
 			{"point":{"x":1,"y":0},"controlLeft":{"x":-0.04938341807808022,"y":0.00035123332592488355},"controlRight":{"x":0,"y":0}}
 		], 'loop'),
-		frequencyCurve: new MIWeb.Curve([
+		frequencyCurve: new MIWeb.Curves.Curve([
 			{point: {x: 0, y: 0}, controlLeft: {x: 0, y: 0}, controlRight: {x: 0.25, y: 0}},
 			{point: {x: 1, y: 0}, controlLeft: {x: -0.25, y: 0}, controlRight: {x: 0, y: 0}}
 		], 'loop'),
-		amplitudeCurve: new MIWeb.Curve([
+		amplitudeCurve: new MIWeb.Curves.Curve([
 			{"point":{"x":0,"y":0},"controlLeft":{"x":0,"y":0},"controlRight":{"x":0.001,"y":0.5}},
 			{"point":{"x":0.2364293890101159,"y":1},"controlLeft":{"x":-0.2364293890101159,"y":0},"controlRight":{"x":0.25,"y":0}},
 			{"point":{"x":1,"y":0},"controlLeft":{"x":-0.3593639575971731,"y":0.1176678445229682},"controlRight":{"x":0,"y":0}}
 		], '')
 	},
 	jump: {
-		wave: new MIWeb.Curve([
+		wave: new MIWeb.Curves.Curve([
 			{"point":{"x":0,"y":0.225},"controlLeft":{"x":0,"y":0},"controlRight":{"x":0.02,"y":0.2}},
 			{"point":{"x":0.1,"y":1},"controlLeft":{"x":-0.05,"y":0},"controlRight":{"x":0,"y":-3.1982265396987613}},
 			{"point":{"x":0.3,"y":-0.35},"controlLeft":{"x":-0.075,"y":0},"controlRight":{"x":0.075,"y":0}},
@@ -249,11 +249,11 @@ MIWeb.Audio.Synthesizer.Presets = {
 			{"point":{"x":0.725,"y":-1},"controlLeft":{"x":-0.1,"y":0},"controlRight":{"x":0.15,"y":0}},
 			{"point":{"x":1,"y":0.225},"controlLeft":{"x":-0.02,"y":-0.2},"controlRight":{"x":0,"y":0}}
 		],'loop'),
-		frequencyCurve: new MIWeb.Curve([
+		frequencyCurve: new MIWeb.Curves.Curve([
 			{"point":{"x":0,"y":0},"controlLeft":{"x":0,"y":0},"controlRight":{"x":0.25,"y":0}},
 			{"point":{"x":1,"y":1},"controlLeft":{"x":-0.007979626485568936,"y":-0.6597623089983025},"controlRight":{"x":0,"y":0}}
 		], ''),
-		amplitudeCurve: new MIWeb.Curve([
+		amplitudeCurve: new MIWeb.Curves.Curve([
 			{point: {x: 0, y: 0}, controlLeft: {x: 0, y: 0}, controlRight: {x: 0.001, y: 0.5}},
 			{point: {x: 0.002, y: 1}, controlLeft: {x: -0.001, y: -0.5}, controlRight: {x: 0, y: -0.25}},
 			{point: {x: 1, y: 0}, controlLeft: {x: -0.25, y: 0}, controlRight: {x: 0, y: 0}}
@@ -261,16 +261,16 @@ MIWeb.Audio.Synthesizer.Presets = {
 		duration: 0.5
 	},
 	warp: {
-		wave: new MIWeb.Curve([
+		wave: new MIWeb.Curves.Curve([
 			{"point":{"x":0,"y":0},"controlLeft":{"x":0,"y":0},"controlRight":{"x":0.017,"y":0.1}},
 			{"point":{"x":0.25,"y":1},"controlLeft":{"x":-0.125,"y":0},"controlRight":{"x":0.125,"y":0}},
 			{"point":{"x":0.5,"y":0},"controlLeft":{"x":-0.017,"y":0.1},"controlRight":{"x":0,"y":0}}
 		], 'ping-pong-y'),
-		frequencyCurve: new MIWeb.Curve([
+		frequencyCurve: new MIWeb.Curves.Curve([
 			{"point":{"x":0,"y":0},"controlLeft":{"x":0,"y":0},"controlRight":{"x":0.25,"y":0}},
 			{"point":{"x":1,"y":1},"controlLeft":{"x":-0.007979626485568936,"y":-0.6597623089983025},"controlRight":{"x":0,"y":0}}
 		], ''),
-		amplitudeCurve: new MIWeb.Curve([
+		amplitudeCurve: new MIWeb.Curves.Curve([
 			{"point":{"x":0,"y":0},"controlLeft":{"x":0,"y":0},"controlRight":{"x":0.017,"y":0.1}},
 			{"point":{"x":0.05,"y":1},"controlLeft":{"x":-0.05,"y":0},"controlRight":{"x":0,"y":0}},
 			{"point":{"x":0.1,"y":0},"controlLeft":{"x":0,"y":0.1},"controlRight":{"x":0,"y":0}}
@@ -278,7 +278,7 @@ MIWeb.Audio.Synthesizer.Presets = {
 		duration: 0.75
 	},
 	engine: {
-		wave: new MIWeb.Curve([
+		wave: new MIWeb.Curves.Curve([
 			{point: {x: 0, y: 0.225}, controlLeft: {x: 0, y: 0}, controlRight: {x: 0.02, y: 0.2}},
 			{point: {x: 0.1, y: 1}, controlLeft: {x: -0.05, y: 0}, controlRight: {x: 0.075, y: 0}},
 			{point: {x: 0.3, y: -0.35}, controlLeft: {x: -0.075, y: 0}, controlRight: {x: 0.075, y: 0}},
@@ -286,11 +286,11 @@ MIWeb.Audio.Synthesizer.Presets = {
 			{point: {x: 0.725, y: -1}, controlLeft: {x: -0.1, y: 0}, controlRight: {x: 0.15, y: 0}},
 			{point: {x: 1, y: 0.225}, controlLeft: {x: -0.02, y: -0.2}, controlRight: {x: 0, y: 0}},
 		],'loop'),
-		frequencyCurve: new MIWeb.Curve([
+		frequencyCurve: new MIWeb.Curves.Curve([
 			{point: {x: 0, y: 0}, controlLeft: {x: 0, y: 0}, controlRight: {x: 0.25, y: 0}},
 			{point: {x: 1, y: 0}, controlLeft: {x: -0.25, y: 0}, controlRight: {x: 0, y: 0}}
 		], 'loop'),
-		amplitudeCurve: new MIWeb.Curve([
+		amplitudeCurve: new MIWeb.Curves.Curve([
 			{"point":{"x":0,"y":0},"controlLeft":{"x":0,"y":0},"controlRight":{"x":0.017,"y":0.1}},
 			{"point":{"x":0.05,"y":1},"controlLeft":{"x":-0.05,"y":0},"controlRight":{"x":0,"y":0}},
 			{"point":{"x":0.1,"y":0},"controlLeft":{"x":0,"y":0.1},"controlRight":{"x":0,"y":0}}

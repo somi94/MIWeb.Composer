@@ -1,10 +1,11 @@
 var MIWeb = MIWeb || {};
+MIWeb.Curves = MIWeb.Curves || {};
 
-MIWeb.Curve = function(frames, end) {
+MIWeb.Curves.Curve = function(frames, end) {
 	this.frames = frames || [];
 	this.end = end;
 };
-MIWeb.Curve.prototype.getFrames = function(loopCount) {
+MIWeb.Curves.Curve.prototype.getFrames = function(loopCount) {
 	var frameCount = this.frames.length;
 	var frames = this.frames.slice(0);
 	
@@ -22,7 +23,7 @@ MIWeb.Curve.prototype.getFrames = function(loopCount) {
 	
 	return frames;
 };
-MIWeb.Curve.prototype.getFrame = function(f) {
+MIWeb.Curves.Curve.prototype.getFrame = function(f) {
 	var frames = this.frames;
 	var frameCount = frames.length;
 	var l = this.end ? Math.floor(f / frameCount) : 0;
@@ -56,7 +57,7 @@ MIWeb.Curve.prototype.getFrame = function(f) {
 		virtual: f >= frameCount
 	};
 };
-MIWeb.Curve.prototype.getValue = function(x) {
+MIWeb.Curves.Curve.prototype.getValue = function(x) {
 	var p = [];
 	var px = 0;
 	var tx = 0;

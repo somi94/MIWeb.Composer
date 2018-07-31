@@ -29,9 +29,9 @@ synth.debug = false;
 var wavWriter = new MIWeb.Audio.WAVWriter();
 
 //initialize the curve editors
-var waveEditor = new MIWeb.CurveEditor(container.querySelector('.curve.wave'), synth.wave, {}, false);
-var amplitudeEditor = new MIWeb.CurveEditor(container.querySelector('.curve.amplitude'), synth.amplitudeCurve, {}, false);
-var frequencyEditor = new MIWeb.CurveEditor(container.querySelector('.curve.frequency'), synth.frequencyCurve, {}, false);
+var waveEditor = new MIWeb.Curves.CurveEditor(container.querySelector('.curve.wave'), synth.wave, {}, false);
+var amplitudeEditor = new MIWeb.Curves.CurveEditor(container.querySelector('.curve.amplitude'), synth.amplitudeCurve, {}, false);
+var frequencyEditor = new MIWeb.Curves.CurveEditor(container.querySelector('.curve.frequency'), synth.frequencyCurve, {}, false);
 
 //initialize the keyboard
 var keyboard = new MIWeb.Audio.UI.Keyboard(container.querySelector(".keyboard"), 3, 3, function(e) {
@@ -47,13 +47,13 @@ function play() {
 	synth.setDuration(parseFloat(container.querySelector(".duration").value));
 
 	var src = '';
-	var local = false;
+	var local = true;
 	if(local) {
-		console.log("prepared (" + ((new Date).valueOf() - timer) + "ms)");
+		//console.log("prepared (" + ((new Date).valueOf() - timer) + "ms)");
 		var data = synth.generate();
-		console.log("generated (" + ((new Date).valueOf() - timer) + "ms)");
+		//console.log("generated (" + ((new Date).valueOf() - timer) + "ms)");
 		src = wavWriter.write(data);
-		console.log("written (" + ((new Date).valueOf() - timer) + "ms)");
+		//console.log("written (" + ((new Date).valueOf() - timer) + "ms)");
 		/*audio.onended = function() {
 			console.log("ended");
 		};*/
