@@ -2,7 +2,17 @@ var MIWeb = MIWeb || {};
 MIWeb.Curves = MIWeb.Curves || {};
 
 MIWeb.Curves.ControlCurveEditor = function(container, curve, options, maximize) {
+    var config = {
+    	template: [],
+        controls: []
+    };
+    options = MIWeb.Utilities.Object.merge(config, options);
+
 	MIWeb.Curves.CurveEditor.call(this, container, curve, options, maximize);
+
+    if(!this.curve || !this.curve.controls || !this.curve.controls.length) {
+        this.curve.controls = MIWeb.Utilities.Object.merge([], this.config.template);
+    }
 };
 MIWeb.Curves.ControlCurveEditor.prototype = Object.create(MIWeb.Curves.CurveEditor.prototype);
 MIWeb.Curves.ControlCurveEditor.prototype.constructor = MIWeb.Curves.ControlCurveEditor;
@@ -15,8 +25,8 @@ MIWeb.Curves.ControlCurveEditor.prototype.getCurveBounds = function() {
 	};
 	for(var c = 0; c < controlCount; c++) {
 		var control = this.curve.controls[c];
+        if(c > 0) control.x = Math.max(control.x, this.curve.controls[c - 1].x);
 		if(c < controlCount - 1) control.x = Math.min(control.x, this.curve.controls[c + 1].x);
-		if(c > 0) control.x = Math.max(control.x, this.curve.controls[c - 1].x);
 		
 		if(c == 0) {
 			bounds.min.x = bounds.max.x = control.x;
@@ -34,7 +44,6 @@ MIWeb.Curves.ControlCurveEditor.prototype.getCurveBounds = function() {
 		bounds.min.y = -fullExtentsY;
 		bounds.max.y = fullExtentsY;
 	}*/
-	console.log(bounds);
 	return bounds;
 };
 MIWeb.Curves.ControlCurveEditor.prototype.renderCurve = function() {
@@ -51,7 +60,6 @@ MIWeb.Curves.ControlCurveEditor.prototype.renderCurve = function() {
 	var dotSize = this.config.dotSize / ppu;
 	
 	var curve = '';
-	
 	for(var c = 0; c < this.curve.controls.length; c++) {
 		var start = this.curve.controls[c].x;
 		var last = c >= this.curve.controls.length - 1;
@@ -88,16 +96,37 @@ MIWeb.Curves.ControlCurveEditor.prototype.renderCurve = function() {
 };
 MIWeb.Curves.ControlCurveEditor.prototype.renderControls = function() {
 	MIWeb.Curves.CurveEditor.prototype.renderControls.call(this);
+
+    var controlContent = '';
+	var configs = this.config.controls;
+	for(var c = 0; c < configs.length; c++) {
+        var controlConfig = this.config.controls[c];
+		var ctrl = controlConfig.targets[0].ctrl;
+		var prop = controlConfig.targets[0].prop;
+		var val = this.curve.controls[ctrl][prop];
+
+        if(controlConfig.type && controlConfig.type === 'delta' && ctrl > 0) {
+            val -= this.curve.controls[ctrl - 1][prop];
+        }
+
+        controlContent +=
+			'<div class="option">' +
+				'<label>' + controlConfig.label + '</label>' +
+            	'<input type="text" data-control="' + c + '" value="' + val + '" />' +
+			'</div>'
+		;
+	}
+    this.controls.innerHTML = controlContent;
+
+	/*var controlContent = '';
+    controlContent += '<div class="option vector2"><label>attack</label>';
+    controlContent += '<input type="text" name="curve-controls-1-x" value="' + (this.curve.controls[1] ? this.curve.controls[1].x : '') + '" />';
+    controlContent += '<input type="text" name="curve-controls-1-d" value="' + (this.curve.controls[1] ? this.curve.controls[1].d : '') + '" /></div>';
+    controlContent += '<div class="option vector2"><label>decay</label>';
+    controlContent += '<input type="text" name="curve-controls-2-x" value="' + (this.curve.controls[2] ? this.curve.controls[2].x : '') + '" />';
+    controlContent += '<input type="text" name="curve-controls-2-d" value="' + (this.curve.controls[2] ? this.curve.controls[2].d : '') + '" /></div>';
 	
-	var controls = '';
-	controls += '<div class="option vector2"><label>attack</label>';
-	controls += '<input type="text" name="curve-controls-1-x" value="' + (this.curve.controls[1] ? this.curve.controls[1].x : '') + '" />';
-	controls += '<input type="text" name="curve-controls-1-d" value="' + (this.curve.controls[1] ? this.curve.controls[1].d : '') + '" /></div>';
-	controls += '<div class="option vector2"><label>decay</label>';
-	controls += '<input type="text" name="curve-controls-2-x" value="' + (this.curve.controls[2] ? this.curve.controls[2].x : '') + '" />';
-	controls += '<input type="text" name="curve-controls-2-d" value="' + (this.curve.controls[2] ? this.curve.controls[2].d : '') + '" /></div>';
-	
-	this.controls.innerHTML = controls;
+	this.controls.innerHTML = controlContent;*/
 	
 	//add input events
 	if(this.config.drawControls) {
@@ -105,13 +134,34 @@ MIWeb.Curves.ControlCurveEditor.prototype.renderControls = function() {
 		var editor = this;
 		for(var c = 0; c < controls.length; c++) {
 			controls[c].onchange = function() {
-				//var selectedFrame = editor.selected >= 0 && editor.selected < editor.curve.frames.length ? editor.curve.frames[editor.selected] : null;
+				var controlConfigIndex = parseInt(this.getAttribute('data-control'));
+				var controlConfig = editor.config.controls[controlConfigIndex];
+				var val = this.value;
+
+                if(!isNaN(parseFloat(val)) && isFinite(val)) {
+                    val = parseFloat(val);
+                }
+
+				if(controlConfig.min) val = Math.max(controlConfig.min, val);
+                if(controlConfig.max) val = Math.min(controlConfig.max, val);
+
+                if(controlConfig.type && controlConfig.type === 'delta' && controlConfig.targets[0].ctrl > 0) {
+                	val += editor.curve.controls[controlConfig.targets[0].ctrl - 1][controlConfig.targets[0].prop];
+                }
+
+                for(var t = 0; t < controlConfig.targets.length; t++) {
+					editor.curve.controls[controlConfig.targets[t].ctrl][controlConfig.targets[t].prop] = val;
+				}
+
+                editor.draw();
+
+				/*//var selectedFrame = editor.selected >= 0 && editor.selected < editor.curve.frames.length ? editor.curve.frames[editor.selected] : null;
 				var target = editor;
 				var propertySplit = this.getAttribute('name').split('-');
-				/*if(propertySplit[0] == 'frame') {
-					target = editor.selected >= 0 && editor.selected < editor.curve.frames.length ? editor.curve.frames[editor.selected] : null;
-					propertySplit = propertySplit.slice(1);
-				}*/
+				// if(propertySplit[0] == 'frame') {
+				// 	target = editor.selected >= 0 && editor.selected < editor.curve.frames.length ? editor.curve.frames[editor.selected] : null;
+				// 	propertySplit = propertySplit.slice(1);
+				// }
 				
 				if(!target || !propertySplit) {
 					return;
@@ -130,7 +180,7 @@ MIWeb.Curves.ControlCurveEditor.prototype.renderControls = function() {
 				}
 				
 				target[propertySplit[propertySplit.length - 1]] = val;		
-				editor.draw();
+				editor.draw();*/
 			};
 		}
 	}

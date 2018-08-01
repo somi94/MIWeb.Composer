@@ -204,6 +204,20 @@ MIWeb.Audio.Synthesizer.Presets = {
 		], ''),
 		duration: 1.5
 	},
+	stickado: {
+		//sine
+        wave: new MIWeb.Curves.FrameCurve([
+            {"point":{"x":0,"y":0},"controlLeft":{"x":0,"y":0},"controlRight":{"x":0.017,"y":0.1}},
+            {"point":{"x":0.25,"y":1},"controlLeft":{"x":-0.125,"y":0},"controlRight":{"x":0.125,"y":0}},
+            {"point":{"x":0.5,"y":0},"controlLeft":{"x":-0.017,"y":0.1},"controlRight":{"x":0,"y":0}}
+        ], 'ping-pong-y'),
+		//constant
+        frequencyCurve: new MIWeb.Curves.FrameCurve([
+            {point: {x: 0, y: 0}, controlLeft: {x: 0, y: 0}, controlRight: {x: 0.25, y: 0}},
+            {point: {x: 1, y: 0}, controlLeft: {x: -0.25, y: 0}, controlRight: {x: 0, y: 0}}
+        ], 'loop'),
+		amplitudeCurve: new MIWeb.Curves.ControlCurve({"controls":[{"x":0,"y":0,"d":1},{"x":0.002,"y":1,"d":1},{"x":0.2,"y":0.5,"d":1},{"x":0.5,"y":0.5,"d":1},{"x":1,"y":0,"d":1}]})
+	},
 	organ: {
 		wave: new MIWeb.Curves.FrameCurve([
 			{point: {x: 0, y: 0.225}, controlLeft: {x: 0, y: 0}, controlRight: {x: 0.02, y: 0.2}},

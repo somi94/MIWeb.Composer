@@ -1,4 +1,6 @@
 <?php
+die('server synth is disabled.');
+
 $file = $_SERVER['REQUEST_URI'];
 $file = explode('/',$file);
 $file = $file[count($file) - 1];

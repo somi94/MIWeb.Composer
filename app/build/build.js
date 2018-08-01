@@ -1,11 +1,120 @@
 var MIWeb = MIWeb || {};
+MIWeb.Utilities = MIWeb.Utilities || {};
+
+MIWeb.Utilities.Object = function() {};
+MIWeb.Utilities.Object.merge = function() {
+	var array =
+		MIWeb.Utilities.Object.isArray(arguments[0]) ||
+		(!MIWeb.Utilities.Object.isObject(arguments[0]) && MIWeb.Utilities.Object.isArray(arguments[1]))
+	;
+	var result = arguments[0] || (array ? [] : {});
+	for(var o = 1; o < arguments.length; o++) {
+		if(
+			(!array && !MIWeb.Utilities.Object.isObject(arguments[o])) ||
+			(array && !MIWeb.Utilities.Object.isArray(arguments[o]))
+		) {
+			continue;
+        }
+		if(array) {
+			for(var i = 0; i < arguments[o].length; i++) {
+                var v = arguments[o][i];
+                if(MIWeb.Utilities.Object.isObject(v) || MIWeb.Utilities.Object.isArray(v)) {
+                    v = MIWeb.Utilities.Object.merge(null, v);
+                }
+				result.push(v);
+			}
+        } else {
+            for(var k in arguments[o]) {
+                var v = arguments[o][k];
+                if(MIWeb.Utilities.Object.isObject(v) || MIWeb.Utilities.Object.isArray(v)) {
+                    if(result[k]) {
+                        v = MIWeb.Utilities.Object.merge(result[k], v);
+                    } else {
+                        v = MIWeb.Utilities.Object.merge(null, v);
+                    }
+                }
+                result[k] = v;
+            }
+		}
+	}
+	return result;
+};
+MIWeb.Utilities.Object.isObject = function(val) {
+	return val === Object(val);
+};
+MIWeb.Utilities.Object.isArray = function(obj) {
+    return Object.prototype.toString.call(obj) === '[object Array]';
+};var MIWeb = MIWeb || {};
 MIWeb.Curves = MIWeb.Curves || {};
 
-MIWeb.Curves.Curve = function(frames, end) {
-	this.frames = frames || [];
-	this.end = end;
+MIWeb.Curves.Curve = function() {
 };
-MIWeb.Curves.Curve.prototype.getFrames = function(loopCount) {
+/*MIWeb.Curves.Curve.prototype.getFrames = function(loopCount) {
+};
+MIWeb.Curves.Curve.prototype.getFrame = function(f) {
+};*/
+MIWeb.Curves.Curve.prototype.getLength = function() {
+	return 1;
+};
+MIWeb.Curves.Curve.prototype.getValue = function(x) {
+	return 0;
+};var MIWeb = MIWeb || {};
+MIWeb.Curves = MIWeb.Curves || {};
+
+MIWeb.Curves.FrameCurve = function(frames, end) {
+	MIWeb.Curves.Curve.call(this);
+	
+	this.end = '';
+	
+	if(frames instanceof MIWeb.Curves.FrameCurve) {
+		this.frames = frames.frames;
+		this.end = frames.end;
+	} else if(frames instanceof MIWeb.Curves.Curve) {
+		this.fromCurve(frames);
+	} else {
+		this.frames = frames || [];
+	}
+	
+	this.end = end || this.end;
+};
+MIWeb.Curves.FrameCurve.prototype = Object.create(MIWeb.Curves.Curve.prototype);
+MIWeb.Curves.FrameCurve.prototype.constructor = MIWeb.Curves.FrameCurve;
+MIWeb.Curves.FrameCurve.prototype.fromCurve = function(curve) {
+	this.frames = [];
+	
+	var length = this.getLength();
+	var steps = 100;
+	var stepSize = length / steps;
+	
+	for(var s = 0; s < steps; s++) {
+		var x = s * stepSize;
+		var point = false;
+		if(s == 0 || s == steps - 1) {
+			point = true;
+		} else {
+			var current = curve.getValue(x);
+			var previous = curve.getValue(x - stepSize);
+			var next = curve.getValue(x + stepSize);
+			
+			point = 
+				(current > previous && current > next) ||
+				(current < previous && current < next) ||
+				(current == previous && current != next) ||
+				(current != previous && current == next)
+			;
+		}
+		
+		if(point) {
+			this.frames.push({
+				point: {x: x, y: curve.getValue(x)},
+				controlLeft: {x: 0, y: 0},
+				controlRight: {x: 0, y: 0},
+				virtual: false
+			});
+		}
+	}
+};
+MIWeb.Curves.FrameCurve.prototype.getFrames = function(loopCount) {
 	var frameCount = this.frames.length;
 	var frames = this.frames.slice(0);
 	
@@ -23,7 +132,7 @@ MIWeb.Curves.Curve.prototype.getFrames = function(loopCount) {
 	
 	return frames;
 };
-MIWeb.Curves.Curve.prototype.getFrame = function(f) {
+MIWeb.Curves.FrameCurve.prototype.getFrame = function(f) {
 	var frames = this.frames;
 	var frameCount = frames.length;
 	var l = this.end ? Math.floor(f / frameCount) : 0;
@@ -57,12 +166,18 @@ MIWeb.Curves.Curve.prototype.getFrame = function(f) {
 		virtual: f >= frameCount
 	};
 };
-MIWeb.Curves.Curve.prototype.getValue = function(x) {
+MIWeb.Curves.FrameCurve.prototype.getLength = function() {
+	if(!this.frames || !this.frames.length) {
+		return 0;
+	}
+	return this.frames[this.frames.length - 1].point.x;
+};
+MIWeb.Curves.FrameCurve.prototype.getValue = function(x) {
 	var p = [];
 	var px = 0;
 	var tx = 0;
 	var frameCount = this.frames.length;
-	var curveLength = this.frames[frameCount - 1].point.x;
+	var curveLength = this.getLength();
 	var curveNum = Math.floor(x / curveLength);
 	
 	for(var f = 0; f < frameCount; f++) {
@@ -235,34 +350,66 @@ MIWeb.Curves.Curve.prototype.getValue = function(x) {
 	dCpts.splice(dCpts.length - 1, 1);
 	}
 	return dCpts[0];*/
-};//TODO:
-//solve auto resizing window behaviour while dragging (zoom levels (=steps)?)
-//add/remove frames
-//show full synth source(=config) (formatted json)
-//make synth source editable
-//play button in popup
-//handle size?
-//make loops easier?
-//improve presets
-//dont render everything again on draw, dont redraw on drag/input
+};var MIWeb = MIWeb || {};
+MIWeb.Curves = MIWeb.Curves || {};
 
-var MIWeb = MIWeb || {};
+MIWeb.Curves.ControlCurve = function(controls) {
+	MIWeb.Curves.Curve.call(this);
+	
+	this.controls = controls || [];
+	/*this.attack = attack || attack === 0 ? attack : 0.002;
+	this.decay = decay || decay === 0 ? decay : 1 - this.attack;*/
+};
+MIWeb.Curves.ControlCurve.prototype = Object.create(MIWeb.Curves.Curve.prototype);
+MIWeb.Curves.ControlCurve.prototype.constructor = MIWeb.Curves.ControlCurve;
+MIWeb.Curves.ControlCurve.prototype.getLength = function() {
+	return this.controls.length ? this.controls[this.controls.length - 1].x : 1;
+};
+MIWeb.Curves.ControlCurve.prototype.getValue = function(x) {
+	var last = {
+		x: 0,
+		y: 0,
+		d: 1
+	};
+	for(var c = 0; c < this.controls.length; c++) {
+		if(x >= last.x && x <= this.controls[c].x) {
+			var d = this.controls[c].x - last.x;
+			var p = d != 0 ? (x - last.x) / d : 0; 
+
+			return last.y + Math.pow(p, this.controls[c].d) * (this.controls[c].y - last.y);
+		}
+		last = this.controls[c];
+	}
+	
+	return 0;
+	
+	/*if(x <= this.attack) {
+		return x / this.attack;
+	}
+	
+	x -= this.attack;	
+	if(x <= this.decay) {
+		//return 1 - x / this.decay;
+		var dampen = 0.1;
+		
+		return 1 - Math.pow(x / this.decay, dampen);
+	}
+	return 0;*/
+};var MIWeb = MIWeb || {};
 MIWeb.Curves = MIWeb.Curves || {};
 
 MIWeb.Curves.CurveEditor = function(container, curve, options, maximize) {
 	var config = {
-		dotSize: 5,
 		drawAxes: true,
 		drawGrid: true,
-		drawHandles: true,
 		drawDots: true,
-		drawLoop: true,
 		drawControls: true,
+		
 		axesWeight: 2,
 		gridWeight: 1,
+		dotSize: 5,
 		curveColor: "black",
-		handleColor: "#f00",
-		handleSelectedColor: "#0f0",
+		
 		gridColor: "#666",
 		loopColor: "#ccc",
 		size: {x: null, y: null},
@@ -272,9 +419,8 @@ MIWeb.Curves.CurveEditor = function(container, curve, options, maximize) {
 		keepAspectRatio: false,
 		minimizeOptions: {
 			drawGrid: false,
-			drawHandles: false,
-			drawDots: false,
 			drawControls: false,
+			drawDots: false,
 			axesWeight: 1,
 			curveColor: "#ccc"/*,
 			size: {x: 200, y: 50}*/
@@ -282,9 +428,7 @@ MIWeb.Curves.CurveEditor = function(container, curve, options, maximize) {
 	};
 	
 	if(options) {
-		for(var optionName in options) { 
-			config[optionName] = options[optionName]; 
-		}
+		MIWeb.Utilities.Object.merge(config, options);
 	}
 	
 	this.defaultConfig = config;
@@ -296,12 +440,9 @@ MIWeb.Curves.CurveEditor = function(container, curve, options, maximize) {
 	this.minimized = !maximize;
 	this.setCurve(curve);
 };
-MIWeb.Curves.CurveEditor.prototype.setCurve = function(curve) {
+MIWeb.Curves.CurveEditor.prototype.setCurve = function(curve, silent) {
 	this.curve = curve;
-	this.selected = -1;
-	this.lastSelected = -1;
-	this.grabbed = false;
-	this.draw();
+	if(!silent) this.draw();
 };
 MIWeb.Curves.CurveEditor.prototype.draw = function() {
 	var editor = this;
@@ -383,56 +524,14 @@ MIWeb.Curves.CurveEditor.prototype.draw = function() {
 	window.onresize = function(event) {
 		editor.draw();
 	};
-	
-	//drag & drop
-	if(this.config.dragable && this.config.drawControls) {
-		var svg = this.container.getElementsByTagName("svg")[0];
-		svg.onmouseout = function() {
-			//editor.grabbed = false;
-		};
-		svg.onmouseup = function() {
-			editor.grabbed = false;
-		};
-		svg.onmousemove = function(e) {
-			if(e.buttons && e.button === 0 && editor.grabbed) {
-				//var x = e.pageX - editor.container.offsetLeft;
-				//var y = e.pageY - editor.container.offsetTop;
-				//x -= editor.curveContext.offset.x;
-				//y = (editor.curveContext.canvasSize.y - y) - editor.curveContext.offset.y;
-				//x /= editor.curveContext.pxPerUnit;
-				//y /= editor.curveContext.pxPerUnit;
-				//var x = e.clientX / editor.curveContext.pxPerUnit / editor.curveContext.scale.x;
-				//var y = e.clientY / editor.curveContext.pxPerUnit / editor.curveContext.scale.y;
-				var x = e.movementX / editor.curveContext.pxPerUnit / editor.curveContext.scale.x;
-				var y = -e.movementY / editor.curveContext.pxPerUnit / editor.curveContext.scale.y;
-
-				var frame = editor.curve.frames[editor.grabbed[0]];
-				if(editor.grabbed[1] == 0) {
-					frame.point.x += x;
-					frame.point.y += y;
-				} else {
-					//x -= frame.point.x;
-					//y -= frame.point.y;
-					if(editor.grabbed[1] == 1) {
-						frame.controlLeft.x += x;
-						frame.controlLeft.y += y;
-					} else if(editor.grabbed[1] == 2) {
-						frame.controlRight.x += x;
-						frame.controlRight.y += y;
-					}
-				}
-				
-				editor.curve.frames[editor.grabbed[0]] = frame;
-				editor.draw();
-			}
-		};
-	}
-	
-	this.lastSelected = this.selected;
+};
+MIWeb.Curves.CurveEditor.prototype.getCurveBounds = function() {
+	return {
+		min: {x: 0, y: 0},
+		max: {x: this.curve.getLength(), y: 1}
+	};
 };
 MIWeb.Curves.CurveEditor.prototype.setupCurveContext = function() {
-	var frameCount = this.curve.frames.length;
-	
 	this.curveContext = {
 		scale: {x: 1, y: 1},
 		//offset: {x: 0, y: 0},
@@ -452,38 +551,13 @@ MIWeb.Curves.CurveEditor.prototype.setupCurveContext = function() {
 		pxPerUnit: 100
 	};
 	
-	if(this.curveContext.canvasSize.x < 0 || this.curveContext.canvasSize.y <= 0 || !this.curve || !this.curve.frames) {
+	if(this.curveContext.canvasSize.x < 0 || this.curveContext.canvasSize.y <= 0 || !this.curve || !this.curve.getLength()) {
 		return;
 	}
 	
-	for(var f = 0; f < frameCount; f++) {
-		var frame = this.curve.frames[f];
-		frame.controlLeft.x = Math.min(0,Math.max(frame.controlLeft.x, f > 0 ? this.curve.frames[f - 1].point.x - frame.point.x : 0));
-		frame.controlRight.x = Math.max(0,Math.min(frame.controlRight.x, f < frameCount - 1 ? this.curve.frames[f + 1].point.x - frame.point.x : 0));
-		this.curve.frames[f] = frame;
-		
-		if(f == 0) {
-			this.curveContext.fullBounds.min = {
-				x: Math.min(frame.point.x, frame.point.x + frame.controlLeft.x, frame.point.x + frame.controlRight.x),
-				y: Math.min(frame.point.y, frame.point.y + frame.controlLeft.y, frame.point.y + frame.controlRight.y)
-			};
-			this.curveContext.fullBounds.max = {
-				x: Math.max(frame.point.x, frame.point.x + frame.controlLeft.x, frame.point.x + frame.controlRight.x),
-				y: Math.max(frame.point.y, frame.point.y + frame.controlLeft.y, frame.point.y + frame.controlRight.y)
-			};
-		} else {
-			this.curveContext.fullBounds.min.x = Math.min(this.curveContext.fullBounds.min.x, frame.point.x, frame.point.x + frame.controlLeft.x, frame.point.x + frame.controlRight.x);
-			this.curveContext.fullBounds.max.x = Math.max(this.curveContext.fullBounds.max.x, frame.point.x, frame.point.x + frame.controlLeft.x, frame.point.x + frame.controlRight.x);
-			this.curveContext.fullBounds.min.y = Math.min(this.curveContext.fullBounds.min.y, frame.point.y, frame.point.y + frame.controlLeft.y, frame.point.y + frame.controlRight.y);
-			this.curveContext.fullBounds.max.y = Math.max(this.curveContext.fullBounds.max.y, frame.point.y, frame.point.y + frame.controlLeft.y, frame.point.y + frame.controlRight.y);
-		}
-	}
-	
-	if(this.curve.end == 'ping-pong-y' || this.curve.end == 'ping-pong-xy') {
-		var fullExtentsY = Math.max(Math.abs(this.curveContext.fullBounds.min.y), Math.abs(this.curveContext.fullBounds.max.y));
-		this.curveContext.fullBounds.min.y = -fullExtentsY;
-		this.curveContext.fullBounds.max.y = fullExtentsY;
-	}
+	this.curveContext.fullBounds = this.getCurveBounds();
+	this.curveContext.fullBounds.size = {};
+	this.curveContext.fullBounds.center = {};
 	
 	var padding = {
 		x: (this.curveContext.fullBounds.max.x - this.curveContext.fullBounds.min.x) * 0.1 || 0.1,
@@ -515,8 +589,6 @@ MIWeb.Curves.CurveEditor.prototype.setupCurveContext = function() {
 		this.curveContext.scale.x = Math.min(this.curveContext.scale.x,this.curveContext.scale.y);
 		this.curveContext.scale.y = this.curveContext.scale.x;
 	}
-	
-	console.log(this.curveContext);
 };
 MIWeb.Curves.CurveEditor.prototype.renderCanvas = function() {
 	this.canvas = this.container.querySelector('svg [data-id="canvas"]');
@@ -646,7 +718,213 @@ MIWeb.Curves.CurveEditor.prototype.renderBackground = function(axes,grid) {
 	
 	this.background.innerHTML = canvas;
 };
-MIWeb.Curves.CurveEditor.prototype.renderCurve = function(frames) {
+MIWeb.Curves.CurveEditor.prototype.renderCurve = function() {
+	this.curveCanvas = this.container.querySelector('[data-id="curve"]');
+	if(!this.curveCanvas) {
+		this.curveCanvas = document.createElementNS("http://www.w3.org/2000/svg", "g");
+		this.curveCanvas.setAttribute('data-id','curve');
+		this.canvas.appendChild(this.curveCanvas);
+	}
+	
+	var ppu = this.curveContext.pxPerUnit;
+	var strokeWidth = this.config.gridWeight / ppu;
+	
+	var curve = '';
+	
+	var length = this.curve.getLength();
+	if(length) {
+		var pathCount = 100;
+		var pathLength = length / pathCount;
+		var x,y,x1,y1;
+		for(var p = 0; p < pathCount - 1; p++) {
+			if(p == 0) {
+				x = p * pathLength;
+				y = this.curve.getValue(x);
+			}
+			x1 = (p + 1) * pathLength;
+			y1 = this.curve.getValue(x1);
+			
+			curve += '<path d="M' + x + ' ' + y + ' L ' + x1 + ' ' + y1 + '" fill="transparent" stroke-width="' + strokeWidth + '" stroke="' + this.config.curveColor + '" />';
+		
+			x = x1;
+			y = y1;
+		}
+	}
+	
+	this.curveCanvas.innerHTML = curve;
+};
+MIWeb.Curves.CurveEditor.prototype.renderControls = function() {
+	this.controls = this.container.querySelector('.controls');
+	if(!this.controls) {
+		this.controls = document.createElement("div");
+		this.controls.className = 'controls';
+		this.container.appendChild(this.controls);
+	}
+};
+MIWeb.Curves.CurveEditor.prototype.renderWindowOptions = function() {
+	this.windowOptions = this.container.querySelector('.curve-window-controls');
+	if(!this.windowOptions) {
+		this.windowOptions = document.createElement('div');
+		this.windowOptions.className = 'curve-window-controls';
+		this.container.appendChild(this.windowOptions);
+	}
+	
+	var windowOptions = '';
+	if(!this.minimized) {
+		windowOptions += '<button class="display-code">&lt;/&gt;</button>';
+	}
+	if(this.config.minimizable) {
+		windowOptions += '<button class="minimize">' + (this.minimized ? '&#8599;' : "&#8601;") + '</button>';
+	}
+		
+	this.windowOptions.innerHTML = windowOptions;
+	var editor = this;
+		
+	if(!this.minimized) {
+		this.windowOptions.querySelector('button.display-code').onclick = function() {
+			/*var printFrames = [];
+			for(var p = 0; p < editor.curve.frames.length; p++) {
+				printFrames.push(JSON.stringify(editor.curve.frames[p]));
+			}
+			alert("[\n\t" + printFrames.join(",\n\t") + "\n]");*/
+			alert(JSON.stringify(editor.curve));
+		};
+	}
+	if(this.config.minimizable) {
+		this.windowOptions.querySelector('button.minimize').onclick = function() {
+			editor.minimized = !editor.minimized;
+			editor.draw();
+		};
+	}
+};//TODO:
+//solve auto resizing window behaviour while dragging (zoom levels (=steps)?)
+//add/remove frames
+//show full synth source(=config) (formatted json)
+//make synth source editable
+//play button in popup
+//handle size?
+//make loops easier?
+//improve presets
+//dont render everything again on draw, dont redraw on drag/input
+
+var MIWeb = MIWeb || {};
+MIWeb.Curves = MIWeb.Curves || {};
+
+MIWeb.Curves.FrameCurveEditor = function(container, curve, options, maximize) {
+	var config = {
+		drawHandles: true,
+		drawLoop: true,
+		handleColor: "#f00",
+		handleSelectedColor: "#0f0",
+		minimizeOptions: {
+			drawHandles: false
+		}
+	};
+	options = MIWeb.Utilities.Object.merge(config, options);
+	
+	MIWeb.Curves.CurveEditor.call(this, container, curve, options, maximize);
+};
+MIWeb.Curves.FrameCurveEditor.prototype = Object.create(MIWeb.Curves.CurveEditor.prototype);
+MIWeb.Curves.FrameCurveEditor.prototype.constructor = MIWeb.Curves.FrameCurveEditor;
+MIWeb.Curves.FrameCurveEditor.prototype.setCurve = function(curve) {
+	MIWeb.Curves.CurveEditor.prototype.setCurve.call(this, curve, true);
+	
+	this.selected = -1;
+	this.lastSelected = -1;
+	this.grabbed = false;
+	
+	this.draw();
+};
+MIWeb.Curves.FrameCurveEditor.prototype.draw = function() {
+	MIWeb.Curves.CurveEditor.prototype.draw.call(this);
+	
+	//drag & drop
+	if(this.config.dragable && this.config.drawControls) {
+		var svg = this.container.getElementsByTagName("svg")[0];
+		svg.onmouseout = function() {
+			//editor.grabbed = false;
+		};
+		svg.onmouseup = function() {
+			editor.grabbed = false;
+		};
+		svg.onmousemove = function(e) {
+			if(e.buttons && e.button === 0 && editor.grabbed) {
+				//var x = e.pageX - editor.container.offsetLeft;
+				//var y = e.pageY - editor.container.offsetTop;
+				//x -= editor.curveContext.offset.x;
+				//y = (editor.curveContext.canvasSize.y - y) - editor.curveContext.offset.y;
+				//x /= editor.curveContext.pxPerUnit;
+				//y /= editor.curveContext.pxPerUnit;
+				//var x = e.clientX / editor.curveContext.pxPerUnit / editor.curveContext.scale.x;
+				//var y = e.clientY / editor.curveContext.pxPerUnit / editor.curveContext.scale.y;
+				var x = e.movementX / editor.curveContext.pxPerUnit / editor.curveContext.scale.x;
+				var y = -e.movementY / editor.curveContext.pxPerUnit / editor.curveContext.scale.y;
+
+				var frame = editor.curve.frames[editor.grabbed[0]];
+				if(editor.grabbed[1] == 0) {
+					frame.point.x += x;
+					frame.point.y += y;
+				} else {
+					//x -= frame.point.x;
+					//y -= frame.point.y;
+					if(editor.grabbed[1] == 1) {
+						frame.controlLeft.x += x;
+						frame.controlLeft.y += y;
+					} else if(editor.grabbed[1] == 2) {
+						frame.controlRight.x += x;
+						frame.controlRight.y += y;
+					}
+				}
+				
+				editor.curve.frames[editor.grabbed[0]] = frame;
+				editor.draw();
+			}
+		};
+	}
+	
+	this.lastSelected = this.selected;
+};
+MIWeb.Curves.CurveEditor.prototype.getCurveBounds = function() {
+	var frameCount = this.curve.frames.length;
+	
+	var bounds = {
+		min: {x: -1, y: -1},
+		max: {x: 1, y: 1}
+	};
+	for(var f = 0; f < frameCount; f++) {
+		var frame = this.curve.frames[f];
+		frame.controlLeft.x = Math.min(0,Math.max(frame.controlLeft.x, f > 0 ? this.curve.frames[f - 1].point.x - frame.point.x : 0));
+		frame.controlRight.x = Math.max(0,Math.min(frame.controlRight.x, f < frameCount - 1 ? this.curve.frames[f + 1].point.x - frame.point.x : 0));
+		this.curve.frames[f] = frame;
+		
+		if(f == 0) {
+			bounds.min = {
+				x: Math.min(frame.point.x, frame.point.x + frame.controlLeft.x, frame.point.x + frame.controlRight.x),
+				y: Math.min(frame.point.y, frame.point.y + frame.controlLeft.y, frame.point.y + frame.controlRight.y)
+			};
+			bounds.max = {
+				x: Math.max(frame.point.x, frame.point.x + frame.controlLeft.x, frame.point.x + frame.controlRight.x),
+				y: Math.max(frame.point.y, frame.point.y + frame.controlLeft.y, frame.point.y + frame.controlRight.y)
+			};
+		} else {
+			bounds.min.x = Math.min(bounds.min.x, frame.point.x, frame.point.x + frame.controlLeft.x, frame.point.x + frame.controlRight.x);
+			bounds.max.x = Math.max(bounds.max.x, frame.point.x, frame.point.x + frame.controlLeft.x, frame.point.x + frame.controlRight.x);
+			bounds.min.y = Math.min(bounds.min.y, frame.point.y, frame.point.y + frame.controlLeft.y, frame.point.y + frame.controlRight.y);
+			bounds.max.y = Math.max(bounds.max.y, frame.point.y, frame.point.y + frame.controlLeft.y, frame.point.y + frame.controlRight.y);
+		}
+	}
+	
+	if(this.curve.end == 'ping-pong-y' || this.curve.end == 'ping-pong-xy') {
+		var fullExtentsY = Math.max(Math.abs(bounds.min.y), Math.abs(bounds.max.y));
+		bounds.min.y = -fullExtentsY;
+		bounds.max.y = fullExtentsY;
+	}
+	
+	return bounds;
+};
+MIWeb.Curves.FrameCurveEditor.prototype.renderCurve = function() {
+	//MIWeb.Curves.CurveEditor.prototype.renderCurve.call(this);
+	
 	var frames = this.getCurveFrames();
 	
 	this.frameViews = Array.apply(null, this.container.querySelectorAll('[data-id="frame"]'));
@@ -814,13 +1092,8 @@ MIWeb.Curves.CurveEditor.prototype.renderCurve = function(frames) {
 		}
 	}
 };
-MIWeb.Curves.CurveEditor.prototype.renderControls = function() {
-	this.controls = this.container.querySelector('.controls');
-	if(!this.controls) {
-		this.controls = document.createElement("div");
-		this.controls.className = 'controls';
-		this.container.appendChild(this.controls);
-	}
+MIWeb.Curves.FrameCurveEditor.prototype.renderControls = function() {
+	MIWeb.Curves.CurveEditor.prototype.renderControls.call(this);
 	
 	var selectedFrame = this.selected >= 0 && this.selected < this.curve.frames.length ? this.curve.frames[this.selected] : null;
 	var controls = '';
@@ -882,42 +1155,10 @@ MIWeb.Curves.CurveEditor.prototype.renderControls = function() {
 		}
 	}
 };
-MIWeb.Curves.CurveEditor.prototype.renderWindowOptions = function() {
-	this.windowOptions = this.container.querySelector('.curve-window-controls');
-	if(!this.windowOptions) {
-		this.windowOptions = document.createElement('div');
-		this.windowOptions.className = 'curve-window-controls';
-		this.container.appendChild(this.windowOptions);
-	}
-	
-	var windowOptions = '';
-	if(!this.minimized) {
-		windowOptions += '<button class="display-code">&lt;/&gt;</button>';
-	}
-	if(this.config.minimizable) {
-		windowOptions += '<button class="minimize">' + (this.minimized ? '&#8599;' : "&#8601;") + '</button>';
-	}
-		
-	this.windowOptions.innerHTML = windowOptions;
-	var editor = this;
-		
-	if(!this.minimized) {
-		this.windowOptions.querySelector('button.display-code').onclick = function() {
-			var printFrames = [];
-			for(var p = 0; p < editor.curve.frames.length; p++) {
-				printFrames.push(JSON.stringify(editor.curve.frames[p]));
-			}
-			alert("[\n\t" + printFrames.join(",\n\t") + "\n]");
-		};
-	}
-	if(this.config.minimizable) {
-		this.windowOptions.querySelector('button.minimize').onclick = function() {
-			editor.minimized = !editor.minimized;
-			editor.draw();
-		};
-	}
+MIWeb.Curves.FrameCurveEditor.prototype.renderWindowOptions = function() {
+	MIWeb.Curves.CurveEditor.prototype.renderWindowOptions.call(this);
 };
-MIWeb.Curves.CurveEditor.prototype.getCurveFrames = function() {
+MIWeb.Curves.FrameCurveEditor.prototype.getCurveFrames = function() {
 	if(!this.curve.frames || !this.curve.frames.length) {
 		return [];
 	}
@@ -930,103 +1171,198 @@ MIWeb.Curves.CurveEditor.prototype.getCurveFrames = function() {
 	
 	return this.curve.getFrames(loopCount);
 };var MIWeb = MIWeb || {};
+MIWeb.Curves = MIWeb.Curves || {};
+
+MIWeb.Curves.ControlCurveEditor = function(container, curve, options, maximize) {
+    var config = {
+    	template: [],
+        controls: []
+    };
+    options = MIWeb.Utilities.Object.merge(config, options);
+
+	MIWeb.Curves.CurveEditor.call(this, container, curve, options, maximize);
+
+    if(!this.curve || !this.curve.controls || !this.curve.controls.length) {
+        this.curve.controls = MIWeb.Utilities.Object.merge([], this.config.template);
+    }
+};
+MIWeb.Curves.ControlCurveEditor.prototype = Object.create(MIWeb.Curves.CurveEditor.prototype);
+MIWeb.Curves.ControlCurveEditor.prototype.constructor = MIWeb.Curves.ControlCurveEditor;
+MIWeb.Curves.ControlCurveEditor.prototype.getCurveBounds = function() {
+	var controlCount = this.curve.controls.length;
+	
+	var bounds = {
+		min: {x: -1, y: -1},
+		max: {x: 1, y: 1}
+	};
+	for(var c = 0; c < controlCount; c++) {
+		var control = this.curve.controls[c];
+        if(c > 0) control.x = Math.max(control.x, this.curve.controls[c - 1].x);
+		if(c < controlCount - 1) control.x = Math.min(control.x, this.curve.controls[c + 1].x);
+		
+		if(c == 0) {
+			bounds.min.x = bounds.max.x = control.x;
+			bounds.min.y = bounds.max.y = control.y;
+		} else {
+			bounds.min.x = Math.min(bounds.min.x, control.x);
+			bounds.max.x = Math.max(bounds.max.x, control.x);
+			bounds.min.y = Math.min(bounds.min.y, control.y);
+			bounds.max.y = Math.max(bounds.max.y, control.y);
+		}
+	}
+	
+	/*if(this.curve.end == 'ping-pong-y' || this.curve.end == 'ping-pong-xy') {
+		var fullExtentsY = Math.max(Math.abs(bounds.min.y), Math.abs(bounds.max.y));
+		bounds.min.y = -fullExtentsY;
+		bounds.max.y = fullExtentsY;
+	}*/
+	return bounds;
+};
+MIWeb.Curves.ControlCurveEditor.prototype.renderCurve = function() {
+	this.curveCanvas = this.container.querySelector('[data-id="curve"]');
+	if(!this.curveCanvas) {
+		this.curveCanvas = document.createElementNS("http://www.w3.org/2000/svg", "g");
+		this.curveCanvas.setAttribute('data-id','curve');
+		this.canvas.appendChild(this.curveCanvas);
+	}
+	
+	var ppu = this.curveContext.pxPerUnit;
+	var scale = this.curveContext.scale;
+	var strokeWidth = this.config.gridWeight / ppu;
+	var dotSize = this.config.dotSize / ppu;
+	
+	var curve = '';
+	for(var c = 0; c < this.curve.controls.length; c++) {
+		var start = this.curve.controls[c].x;
+		var last = c >= this.curve.controls.length - 1;
+		var end = last ? start : this.curve.controls[c + 1].x;
+		var length = end - start;
+		
+		var startY = this.curve.getValue(start);
+		
+		if(length && !last) {
+			var pathCount = 10;
+			var pathLength = length / pathCount;
+			var x,y,x1,y1;
+			for(var p = 0; p < pathCount; p++) {
+				if(p == 0) {
+					x = start
+					y = startY;
+				}
+				x1 = start + (p + 1) * pathLength;
+				y1 = this.curve.getValue(x1);
+				
+				curve += '<path d="M' + (x * scale.x) + ' ' + (y * scale.y) + ' L ' + (x1 * scale.x) + ' ' + (y1 * scale.y) + '" fill="transparent" stroke-width="' + strokeWidth + '" stroke="' + this.config.curveColor + '" />';
+			
+				x = x1;
+				y = y1;
+			}
+		}
+		
+		if(this.config.drawDots) {
+			curve += '<circle cx="' + (start * scale.x) + '" cy="' + (startY * scale.y) + '" r="' + dotSize + '" fill="' + this.config.curveColor + '" />';
+		}
+	}
+	
+	this.curveCanvas.innerHTML = curve;
+};
+MIWeb.Curves.ControlCurveEditor.prototype.renderControls = function() {
+	MIWeb.Curves.CurveEditor.prototype.renderControls.call(this);
+
+    var controlContent = '';
+	var configs = this.config.controls;
+	for(var c = 0; c < configs.length; c++) {
+        var controlConfig = this.config.controls[c];
+		var ctrl = controlConfig.targets[0].ctrl;
+		var prop = controlConfig.targets[0].prop;
+		var val = this.curve.controls[ctrl][prop];
+
+        if(controlConfig.type && controlConfig.type === 'delta' && ctrl > 0) {
+            val -= this.curve.controls[ctrl - 1][prop];
+        }
+
+        controlContent +=
+			'<div class="option">' +
+				'<label>' + controlConfig.label + '</label>' +
+            	'<input type="text" data-control="' + c + '" value="' + val + '" />' +
+			'</div>'
+		;
+	}
+    this.controls.innerHTML = controlContent;
+
+	/*var controlContent = '';
+    controlContent += '<div class="option vector2"><label>attack</label>';
+    controlContent += '<input type="text" name="curve-controls-1-x" value="' + (this.curve.controls[1] ? this.curve.controls[1].x : '') + '" />';
+    controlContent += '<input type="text" name="curve-controls-1-d" value="' + (this.curve.controls[1] ? this.curve.controls[1].d : '') + '" /></div>';
+    controlContent += '<div class="option vector2"><label>decay</label>';
+    controlContent += '<input type="text" name="curve-controls-2-x" value="' + (this.curve.controls[2] ? this.curve.controls[2].x : '') + '" />';
+    controlContent += '<input type="text" name="curve-controls-2-d" value="' + (this.curve.controls[2] ? this.curve.controls[2].d : '') + '" /></div>';
+	
+	this.controls.innerHTML = controlContent;*/
+	
+	//add input events
+	if(this.config.drawControls) {
+		var controls = this.controls.querySelectorAll("input, select");
+		var editor = this;
+		for(var c = 0; c < controls.length; c++) {
+			controls[c].onchange = function() {
+				var controlConfigIndex = parseInt(this.getAttribute('data-control'));
+				var controlConfig = editor.config.controls[controlConfigIndex];
+				var val = this.value;
+
+                if(!isNaN(parseFloat(val)) && isFinite(val)) {
+                    val = parseFloat(val);
+                }
+
+				if(controlConfig.min) val = Math.max(controlConfig.min, val);
+                if(controlConfig.max) val = Math.min(controlConfig.max, val);
+
+                if(controlConfig.type && controlConfig.type === 'delta' && controlConfig.targets[0].ctrl > 0) {
+                	val += editor.curve.controls[controlConfig.targets[0].ctrl - 1][controlConfig.targets[0].prop];
+                }
+
+                for(var t = 0; t < controlConfig.targets.length; t++) {
+					editor.curve.controls[controlConfig.targets[t].ctrl][controlConfig.targets[t].prop] = val;
+				}
+
+                editor.draw();
+
+				/*//var selectedFrame = editor.selected >= 0 && editor.selected < editor.curve.frames.length ? editor.curve.frames[editor.selected] : null;
+				var target = editor;
+				var propertySplit = this.getAttribute('name').split('-');
+				// if(propertySplit[0] == 'frame') {
+				// 	target = editor.selected >= 0 && editor.selected < editor.curve.frames.length ? editor.curve.frames[editor.selected] : null;
+				// 	propertySplit = propertySplit.slice(1);
+				// }
+				
+				if(!target || !propertySplit) {
+					return;
+				}
+				
+				for(var p = 0; p < propertySplit.length - 1; p++) {
+					if(!target[propertySplit[p]]) {
+						return;
+					}
+					target = target[propertySplit[p]];
+				}
+				
+				var val = this.value;
+				if(!isNaN(parseFloat(val)) && isFinite(val)) {
+					val = parseFloat(val);
+				}
+				
+				target[propertySplit[propertySplit.length - 1]] = val;		
+				editor.draw();*/
+			};
+		}
+	}
+};var MIWeb = MIWeb || {};
 MIWeb.Audio = MIWeb.Audio || {};
 
 MIWeb.Audio.Clip = function(sampleRate, data, channels) {
 	this.sampleRate = sampleRate || 44100;
 	this.data = data || [];
 	this.channels = channels || 1;
-};var MIWeb = MIWeb || {};
-MIWeb.Audio = MIWeb.Audio || {};
-MIWeb.Audio.UI = MIWeb.Audio || {};
-
-MIWeb.Audio.UI.Keyboard = function(container, octave, octaveCount, onplay, noControls) {
-	this.container = container;
-	this.drawControls = !noControls;
-	this.setOctaveCount(octaveCount || 1);
-	this.setOctave(octave || 4);
-	this.draw();
-	//this.playEvent = new CustomEvent('play', {note: 'C', octave: this.octave});
-	if(onplay) {
-		this.container.addEventListener('play', onplay, false);
-	}
-};
-MIWeb.Audio.UI.Keyboard.prototype.setOctave = function(octave) {
-	this.octave = Math.max(1, Math.min(9 - this.octaveCount, octave));
-};
-MIWeb.Audio.UI.Keyboard.prototype.setOctaveCount = function(octaveCount) {
-	this.octaveCount = Math.max(1, Math.min(8, octaveCount));
-	this.setOctave(this.octave);
-};
-MIWeb.Audio.UI.Keyboard.prototype.draw = function() {
-	//validate options
-	this.setOctaveCount(this.octaveCount);
-	
-	//setup container
-	var containerClass = "keyboard";
-	var classArr = this.container.className.split(" ");
-    if(classArr.indexOf(containerClass) == -1) {
-        this.container.className += " " + containerClass;
-    }
-	
-	//render keys
-	this.container.innerHTML = this.renderKeys();
-	
-	if(this.drawControls) {	
-		//render controls
-		this.container.innerHTML += this.renderControls();
-		
-		//add control events
-		var controls = this.container.querySelectorAll('input');
-		for(var e = 0; e < controls.length; e++) {
-			var keyboard = this;
-			controls[e].onchange = function() {
-				keyboard[this.getAttribute('name')] = this.value;
-				keyboard.draw();
-			};
-		}
-	}
-
-	//add key events
-	var keyElements = this.container.querySelectorAll('.key');
-	for(var e = 0; e < keyElements.length; e++) {
-		var keyboard = this;
-		keyElements[e].onclick = function() {
-			keyboard.container.dispatchEvent(new CustomEvent('play', {detail: {
-				note: this.getAttribute('data-note'), 
-				octave: this.getAttribute('data-octave')
-			}}));
-		};
-	}
-};
-MIWeb.Audio.UI.Keyboard.prototype.renderKeys = function() {
-	var baseKeys = '';
-	var sharpKeys = '';
-	
-	var baseNotes = ['C','D','E','F','G','A','B'];
-	var sharpNotes = ['C#', 'D#', null, 'F#', 'G#', 'A#', null];
-	
-	var noteCount = baseNotes.length;
-	var keyCount = noteCount * this.octaveCount;
-	for(var k = 0; k < keyCount; k++) {
-		var noteIndex = k % noteCount;
-		var octave = Math.floor(k / noteCount) + this.octave;
-		
-		baseKeys += '<div class="key" data-note="' + baseNotes[noteIndex] + '" data-octave="' + octave + '" style="position: absolute; top: 0; bottom: 0; left: ' + (k / keyCount * 100) + '%; right: ' + (100 - (k + 1) / keyCount * 100) + '%;"><label>' + baseNotes[noteIndex] + octave + '</label></div>';
-		if(sharpNotes[noteIndex]) {
-			sharpKeys += '<div class="key sharp" data-note="' + sharpNotes[noteIndex] + '" data-octave="' + octave + '" style="position: absolute; top: 0; bottom: 25%; left: ' + ((k + 0.5) / keyCount * 100) + '%; right: ' + (100 - (k + 1.5) / keyCount * 100) + '%;"><label>' + sharpNotes[noteIndex] + octave + '</label></div>';
-		}
-	}
-	
-	return '<div class="keys">' + baseKeys + sharpKeys + '</div>';
-};
-MIWeb.Audio.UI.Keyboard.prototype.renderControls = function() {
-	var controls = '';
-	
-	controls += '<div><label>Octave Range</label><input name="octaveCount" type="range" min="1" max="8" value="' + this.octaveCount + '" /><span>' + this.octaveCount + '</span></div>';
-	controls += '<div><label>Base Octave</label><input name="octave" type="range" min="1" max="' + (9 - this.octaveCount) + '" value="' + this.octave + '" /><span>' + this.octave + '</span></div>';
-	
-	return '<div class="controls">' + controls + '</div>';
 };var MIWeb = MIWeb || {};
 MIWeb.Audio = MIWeb.Audio || {};
 
@@ -1065,11 +1401,19 @@ MIWeb.Audio.Synthesizer.prototype.applyPreset = function(preset, property) {
 			this.applyProperty(p, preset[p]);
 		}
 	}
+	
 };
 MIWeb.Audio.Synthesizer.prototype.applyProperty = function(name, val) {
 	if((name == 'wave' || name == 'amplitudeCurve' || name == 'frequencyCurve') && !(val instanceof MIWeb.Curves.Curve)) {
+		var type = MIWeb.Curves.Curve;
+		if(val.frames) {
+			type = MIWeb.Curves.FrameCurve;
+		} else if(val.controls) {
+			type = MIWeb.Curves.ControlCurve;
+		}
+		
 		var tmp = val;
-		var val = new MIWeb.Curves.Curve();
+		var val = new type();
 		for(var p in tmp) {
 			val[p] = tmp[p];
 		}
@@ -1172,41 +1516,41 @@ MIWeb.Audio.Synthesizer.Waves = {
 
 MIWeb.Audio.Synthesizer.Presets = {
 	/*constant: {
-		wave: new MIWeb.Curves.Curve([
+		wave: new MIWeb.Curves.FrameCurve([
 			{point: {x: 0, y: 1}, controlLeft: {x: 0, y: 0}, controlRight: {x: 0.25, y: 0}},
 			{point: {x: 1, y: 1}, controlLeft: {x: -0.25, y: 0}, controlRight: {x: 0, y: 0}}
 		], 'loop'),
-		frequencyCurve: new MIWeb.Curves.Curve([
+		frequencyCurve: new MIWeb.Curves.FrameCurve([
 			{point: {x: 0, y: 0}, controlLeft: {x: 0, y: 0}, controlRight: {x: 0.25, y: 0}},
 			{point: {x: 1, y: 0}, controlLeft: {x: -0.25, y: 0}, controlRight: {x: 0, y: 0}}
 		], 'loop'),
-		amplitudeCurve: new MIWeb.Curves.Curve([
+		amplitudeCurve: new MIWeb.Curves.FrameCurve([
 			{point: {x: 0, y: 1}, controlLeft: {x: 0, y: 0}, controlRight: {x: 0.25, y: 0}},
 			{point: {x: 1, y: 1}, controlLeft: {x: -0.25, y: 0}, controlRight: {x: 0, y: 0}}
 		], 'loop')
 	},*/
 	sine: {
-		wave: new MIWeb.Curves.Curve([
+		wave: new MIWeb.Curves.FrameCurve([
 			{"point":{"x":0,"y":0},"controlLeft":{"x":0,"y":0},"controlRight":{"x":0.017,"y":0.1}},
 			{"point":{"x":0.25,"y":1},"controlLeft":{"x":-0.125,"y":0},"controlRight":{"x":0.125,"y":0}},
 			{"point":{"x":0.5,"y":0},"controlLeft":{"x":-0.017,"y":0.1},"controlRight":{"x":0,"y":0}}
 		], 'ping-pong-y'),
-		frequencyCurve: new MIWeb.Curves.Curve([
+		frequencyCurve: new MIWeb.Curves.FrameCurve([
 			{point: {x: 0, y: 0}, controlLeft: {x: 0, y: 0}, controlRight: {x: 0.25, y: 0}},
 			{point: {x: 1, y: 0}, controlLeft: {x: -0.25, y: 0}, controlRight: {x: 0, y: 0}}
 		], 'loop'),
-		/*amplitudeCurve: new MIWeb.Curves.Curve([
+		/*amplitudeCurve: new MIWeb.Curves.FrameCurve([
 			{point: {x: 0, y: 0}, controlLeft: {x: 0, y: 0}, controlRight: {x: 0.001, y: 0.5}},
 			{point: {x: 0.002, y: 1}, controlLeft: {x: -0.001, y: -0.5}, controlRight: {x: 0, y: 0}},
 			{point: {x: 1, y: 0}, controlLeft: {x: 0, y: 0}, controlRight: {x: 0, y: 0}}
 		], '')*/
-		amplitudeCurve: new MIWeb.Curves.Curve([
+		amplitudeCurve: new MIWeb.Curves.FrameCurve([
 			{point: {x: 0, y: 1}, controlLeft: {x: 0, y: 0}, controlRight: {x: 0.25, y: 0}},
 			{point: {x: 1, y: 1}, controlLeft: {x: -0.25, y: 0}, controlRight: {x: 0, y: 0}}
 		], 'loop')
 	},
 	piano: {
-		wave: new MIWeb.Curves.Curve([
+		wave: new MIWeb.Curves.FrameCurve([
 			{point: {x: 0, y: 0.0}, controlLeft: {x: 0, y: 0}, controlRight: {x: 0.015, y: 0.2}},
 			{point: {x: 0.1, y: 1}, controlLeft: {x: -0.05, y: 0}, controlRight: {x: 0.075, y: 0}},
 			{point: {x: 0.3, y: -0.35}, controlLeft: {x: -0.075, y: 0}, controlRight: {x: 0.075, y: 0}},
@@ -1214,19 +1558,33 @@ MIWeb.Audio.Synthesizer.Presets = {
 			{point: {x: 0.725, y: -1}, controlLeft: {x: -0.1, y: 0}, controlRight: {x: 0.15, y: 0}},
 			{point: {x: 1, y: 0.0}, controlLeft: {x: -0.015, y: -0.2}, controlRight: {x: 0, y: 0}},
 		],'loop'),
-		frequencyCurve: new MIWeb.Curves.Curve([
+		frequencyCurve: new MIWeb.Curves.FrameCurve([
 			{point: {x: 0, y: 0}, controlLeft: {x: 0, y: 0}, controlRight: {x: 0.25, y: 0}},
 			{point: {x: 1, y: 0}, controlLeft: {x: -0.25, y: 0}, controlRight: {x: 0, y: 0}}
 		], 'loop'),
-		amplitudeCurve: new MIWeb.Curves.Curve([
+		amplitudeCurve: new MIWeb.Curves.FrameCurve([
 			{point: {x: 0, y: 0}, controlLeft: {x: 0, y: 0}, controlRight: {x: 0.001, y: 0.5}},
 			{point: {x: 0.002, y: 1}, controlLeft: {x: -0.001, y: -0.5}, controlRight: {x: 0, y: -0.25}},
 			{point: {x: 1, y: 0}, controlLeft: {x: -0.25, y: 0}, controlRight: {x: 0, y: 0}}
 		], ''),
 		duration: 1.5
 	},
+	stickado: {
+		//sine
+        wave: new MIWeb.Curves.FrameCurve([
+            {"point":{"x":0,"y":0},"controlLeft":{"x":0,"y":0},"controlRight":{"x":0.017,"y":0.1}},
+            {"point":{"x":0.25,"y":1},"controlLeft":{"x":-0.125,"y":0},"controlRight":{"x":0.125,"y":0}},
+            {"point":{"x":0.5,"y":0},"controlLeft":{"x":-0.017,"y":0.1},"controlRight":{"x":0,"y":0}}
+        ], 'ping-pong-y'),
+		//constant
+        frequencyCurve: new MIWeb.Curves.FrameCurve([
+            {point: {x: 0, y: 0}, controlLeft: {x: 0, y: 0}, controlRight: {x: 0.25, y: 0}},
+            {point: {x: 1, y: 0}, controlLeft: {x: -0.25, y: 0}, controlRight: {x: 0, y: 0}}
+        ], 'loop'),
+		amplitudeCurve: new MIWeb.Curves.ControlCurve({"controls":[{"x":0,"y":0,"d":1},{"x":0.002,"y":1,"d":1},{"x":0.2,"y":0.5,"d":1},{"x":0.5,"y":0.5,"d":1},{"x":1,"y":0,"d":1}]})
+	},
 	organ: {
-		wave: new MIWeb.Curves.Curve([
+		wave: new MIWeb.Curves.FrameCurve([
 			{point: {x: 0, y: 0.225}, controlLeft: {x: 0, y: 0}, controlRight: {x: 0.02, y: 0.2}},
 			{point: {x: 0.1, y: 1}, controlLeft: {x: -0.05, y: 0}, controlRight: {x: 0.075, y: 0}},
 			{point: {x: 0.3, y: -0.35}, controlLeft: {x: -0.075, y: 0}, controlRight: {x: 0.075, y: 0}},
@@ -1234,11 +1592,11 @@ MIWeb.Audio.Synthesizer.Presets = {
 			{point: {x: 0.725, y: -1}, controlLeft: {x: -0.1, y: 0}, controlRight: {x: 0.15, y: 0}},
 			{point: {x: 1, y: 0.225}, controlLeft: {x: -0.02, y: -0.2}, controlRight: {x: 0, y: 0}},
 		],'loop'),
-		frequencyCurve: new MIWeb.Curves.Curve([
+		frequencyCurve: new MIWeb.Curves.FrameCurve([
 			{point: {x: 0, y: 0}, controlLeft: {x: 0, y: 0}, controlRight: {x: 0.25, y: 0}},
 			{point: {x: 1, y: 0}, controlLeft: {x: -0.25, y: 0}, controlRight: {x: 0, y: 0}}
 		], 'loop'),
-		amplitudeCurve: new MIWeb.Curves.Curve([
+		amplitudeCurve: new MIWeb.Curves.FrameCurve([
 			{"point":{"x":0,"y":0},"controlLeft":{"x":0,"y":0},"controlRight":{"x":0.001,"y":0.5}},
 			{"point":{"x":0.3527762863814007,"y":1},"controlLeft":{"x":-0.20118618037433356,"y":0.0010600706713781438},"controlRight":{"x":0.25,"y":0}},
 			{"point":{"x":1,"y":0},"controlLeft":{"x":-0.3593639575971731,"y":0.1176678445229682},"controlRight":{"x":0,"y":0}}
@@ -1246,7 +1604,7 @@ MIWeb.Audio.Synthesizer.Presets = {
 		duration: 2
 	},
 	violin: {
-		wave: new MIWeb.Curves.Curve([
+		wave: new MIWeb.Curves.FrameCurve([
 			{"point":{"x":0,"y":0},"controlLeft":{"x":0,"y":0},"controlRight":{"x":0.04442438188144986,"y":0.014510486451557225}},
 			{"point":{"x":0.1,"y":-0.2},"controlLeft":{"x":-0.025,"y":0},"controlRight":{"x":0.0657243816254417,"y":0.000706713780918744}},
 			{"point":{"x":0.2,"y":0.9},"controlLeft":{"x":-0.06537102473498235,"y":0.00035335689045934426},"controlRight":{"x":0.06749116607773853,"y":0.0031802120141342094}},
@@ -1259,18 +1617,18 @@ MIWeb.Audio.Synthesizer.Presets = {
 			{"point":{"x":0.9,"y":-0.9},"controlLeft":{"x":-0.04000263808212723,"y":-0.003009116089418451},"controlRight":{"x":0.05628028317217271,"y":0.0026545851608344995}},
 			{"point":{"x":1,"y":0},"controlLeft":{"x":-0.04938341807808022,"y":0.00035123332592488355},"controlRight":{"x":0,"y":0}}
 		], 'loop'),
-		frequencyCurve: new MIWeb.Curves.Curve([
+		frequencyCurve: new MIWeb.Curves.FrameCurve([
 			{point: {x: 0, y: 0}, controlLeft: {x: 0, y: 0}, controlRight: {x: 0.25, y: 0}},
 			{point: {x: 1, y: 0}, controlLeft: {x: -0.25, y: 0}, controlRight: {x: 0, y: 0}}
 		], 'loop'),
-		amplitudeCurve: new MIWeb.Curves.Curve([
+		amplitudeCurve: new MIWeb.Curves.FrameCurve([
 			{"point":{"x":0,"y":0},"controlLeft":{"x":0,"y":0},"controlRight":{"x":0.001,"y":0.5}},
 			{"point":{"x":0.2364293890101159,"y":1},"controlLeft":{"x":-0.2364293890101159,"y":0},"controlRight":{"x":0.25,"y":0}},
 			{"point":{"x":1,"y":0},"controlLeft":{"x":-0.3593639575971731,"y":0.1176678445229682},"controlRight":{"x":0,"y":0}}
 		], '')
 	},
 	jump: {
-		wave: new MIWeb.Curves.Curve([
+		wave: new MIWeb.Curves.FrameCurve([
 			{"point":{"x":0,"y":0.225},"controlLeft":{"x":0,"y":0},"controlRight":{"x":0.02,"y":0.2}},
 			{"point":{"x":0.1,"y":1},"controlLeft":{"x":-0.05,"y":0},"controlRight":{"x":0,"y":-3.1982265396987613}},
 			{"point":{"x":0.3,"y":-0.35},"controlLeft":{"x":-0.075,"y":0},"controlRight":{"x":0.075,"y":0}},
@@ -1278,11 +1636,11 @@ MIWeb.Audio.Synthesizer.Presets = {
 			{"point":{"x":0.725,"y":-1},"controlLeft":{"x":-0.1,"y":0},"controlRight":{"x":0.15,"y":0}},
 			{"point":{"x":1,"y":0.225},"controlLeft":{"x":-0.02,"y":-0.2},"controlRight":{"x":0,"y":0}}
 		],'loop'),
-		frequencyCurve: new MIWeb.Curves.Curve([
+		frequencyCurve: new MIWeb.Curves.FrameCurve([
 			{"point":{"x":0,"y":0},"controlLeft":{"x":0,"y":0},"controlRight":{"x":0.25,"y":0}},
 			{"point":{"x":1,"y":1},"controlLeft":{"x":-0.007979626485568936,"y":-0.6597623089983025},"controlRight":{"x":0,"y":0}}
 		], ''),
-		amplitudeCurve: new MIWeb.Curves.Curve([
+		amplitudeCurve: new MIWeb.Curves.FrameCurve([
 			{point: {x: 0, y: 0}, controlLeft: {x: 0, y: 0}, controlRight: {x: 0.001, y: 0.5}},
 			{point: {x: 0.002, y: 1}, controlLeft: {x: -0.001, y: -0.5}, controlRight: {x: 0, y: -0.25}},
 			{point: {x: 1, y: 0}, controlLeft: {x: -0.25, y: 0}, controlRight: {x: 0, y: 0}}
@@ -1290,16 +1648,16 @@ MIWeb.Audio.Synthesizer.Presets = {
 		duration: 0.5
 	},
 	warp: {
-		wave: new MIWeb.Curves.Curve([
+		wave: new MIWeb.Curves.FrameCurve([
 			{"point":{"x":0,"y":0},"controlLeft":{"x":0,"y":0},"controlRight":{"x":0.017,"y":0.1}},
 			{"point":{"x":0.25,"y":1},"controlLeft":{"x":-0.125,"y":0},"controlRight":{"x":0.125,"y":0}},
 			{"point":{"x":0.5,"y":0},"controlLeft":{"x":-0.017,"y":0.1},"controlRight":{"x":0,"y":0}}
 		], 'ping-pong-y'),
-		frequencyCurve: new MIWeb.Curves.Curve([
+		frequencyCurve: new MIWeb.Curves.FrameCurve([
 			{"point":{"x":0,"y":0},"controlLeft":{"x":0,"y":0},"controlRight":{"x":0.25,"y":0}},
 			{"point":{"x":1,"y":1},"controlLeft":{"x":-0.007979626485568936,"y":-0.6597623089983025},"controlRight":{"x":0,"y":0}}
 		], ''),
-		amplitudeCurve: new MIWeb.Curves.Curve([
+		amplitudeCurve: new MIWeb.Curves.FrameCurve([
 			{"point":{"x":0,"y":0},"controlLeft":{"x":0,"y":0},"controlRight":{"x":0.017,"y":0.1}},
 			{"point":{"x":0.05,"y":1},"controlLeft":{"x":-0.05,"y":0},"controlRight":{"x":0,"y":0}},
 			{"point":{"x":0.1,"y":0},"controlLeft":{"x":0,"y":0.1},"controlRight":{"x":0,"y":0}}
@@ -1307,7 +1665,7 @@ MIWeb.Audio.Synthesizer.Presets = {
 		duration: 0.75
 	},
 	engine: {
-		wave: new MIWeb.Curves.Curve([
+		wave: new MIWeb.Curves.FrameCurve([
 			{point: {x: 0, y: 0.225}, controlLeft: {x: 0, y: 0}, controlRight: {x: 0.02, y: 0.2}},
 			{point: {x: 0.1, y: 1}, controlLeft: {x: -0.05, y: 0}, controlRight: {x: 0.075, y: 0}},
 			{point: {x: 0.3, y: -0.35}, controlLeft: {x: -0.075, y: 0}, controlRight: {x: 0.075, y: 0}},
@@ -1315,11 +1673,11 @@ MIWeb.Audio.Synthesizer.Presets = {
 			{point: {x: 0.725, y: -1}, controlLeft: {x: -0.1, y: 0}, controlRight: {x: 0.15, y: 0}},
 			{point: {x: 1, y: 0.225}, controlLeft: {x: -0.02, y: -0.2}, controlRight: {x: 0, y: 0}},
 		],'loop'),
-		frequencyCurve: new MIWeb.Curves.Curve([
+		frequencyCurve: new MIWeb.Curves.FrameCurve([
 			{point: {x: 0, y: 0}, controlLeft: {x: 0, y: 0}, controlRight: {x: 0.25, y: 0}},
 			{point: {x: 1, y: 0}, controlLeft: {x: -0.25, y: 0}, controlRight: {x: 0, y: 0}}
 		], 'loop'),
-		amplitudeCurve: new MIWeb.Curves.Curve([
+		amplitudeCurve: new MIWeb.Curves.FrameCurve([
 			{"point":{"x":0,"y":0},"controlLeft":{"x":0,"y":0},"controlRight":{"x":0.017,"y":0.1}},
 			{"point":{"x":0.05,"y":1},"controlLeft":{"x":-0.05,"y":0},"controlRight":{"x":0,"y":0}},
 			{"point":{"x":0.1,"y":0},"controlLeft":{"x":0,"y":0.1},"controlRight":{"x":0,"y":0}}
@@ -1328,6 +1686,97 @@ MIWeb.Audio.Synthesizer.Presets = {
 		//note: 277.18,
 		octave: 2
 	}
+};var MIWeb = MIWeb || {};
+MIWeb.Audio = MIWeb.Audio || {};
+MIWeb.Audio.UI = MIWeb.Audio || {};
+
+MIWeb.Audio.UI.Keyboard = function(container, octave, octaveCount, onplay, noControls) {
+	this.container = container;
+	this.drawControls = !noControls;
+	this.setOctaveCount(octaveCount || 1);
+	this.setOctave(octave || 4);
+	this.draw();
+	//this.playEvent = new CustomEvent('play', {note: 'C', octave: this.octave});
+	if(onplay) {
+		this.container.addEventListener('play', onplay, false);
+	}
+};
+MIWeb.Audio.UI.Keyboard.prototype.setOctave = function(octave) {
+	this.octave = Math.max(1, Math.min(9 - this.octaveCount, octave));
+};
+MIWeb.Audio.UI.Keyboard.prototype.setOctaveCount = function(octaveCount) {
+	this.octaveCount = Math.max(1, Math.min(8, octaveCount));
+	this.setOctave(this.octave);
+};
+MIWeb.Audio.UI.Keyboard.prototype.draw = function() {
+	//validate options
+	this.setOctaveCount(this.octaveCount);
+	
+	//setup container
+	var containerClass = "keyboard";
+	var classArr = this.container.className.split(" ");
+    if(classArr.indexOf(containerClass) == -1) {
+        this.container.className += " " + containerClass;
+    }
+	
+	//render keys
+	this.container.innerHTML = this.renderKeys();
+	
+	if(this.drawControls) {	
+		//render controls
+		this.container.innerHTML += this.renderControls();
+		
+		//add control events
+		var controls = this.container.querySelectorAll('input');
+		for(var e = 0; e < controls.length; e++) {
+			var keyboard = this;
+			controls[e].onchange = function() {
+				keyboard[this.getAttribute('name')] = this.value;
+				keyboard.draw();
+			};
+		}
+	}
+
+	//add key events
+	var keyElements = this.container.querySelectorAll('.key');
+	for(var e = 0; e < keyElements.length; e++) {
+		var keyboard = this;
+		keyElements[e].onclick = function() {
+			keyboard.container.dispatchEvent(new CustomEvent('play', {detail: {
+				note: this.getAttribute('data-note'), 
+				octave: this.getAttribute('data-octave')
+			}}));
+		};
+	}
+};
+MIWeb.Audio.UI.Keyboard.prototype.renderKeys = function() {
+	var baseKeys = '';
+	var sharpKeys = '';
+	
+	var baseNotes = ['C','D','E','F','G','A','B'];
+	var sharpNotes = ['C#', 'D#', null, 'F#', 'G#', 'A#', null];
+	
+	var noteCount = baseNotes.length;
+	var keyCount = noteCount * this.octaveCount;
+	for(var k = 0; k < keyCount; k++) {
+		var noteIndex = k % noteCount;
+		var octave = Math.floor(k / noteCount) + this.octave;
+		
+		baseKeys += '<div class="key" data-note="' + baseNotes[noteIndex] + '" data-octave="' + octave + '" style="position: absolute; top: 0; bottom: 0; left: ' + (k / keyCount * 100) + '%; right: ' + (100 - (k + 1) / keyCount * 100) + '%;"><label>' + baseNotes[noteIndex] + octave + '</label></div>';
+		if(sharpNotes[noteIndex]) {
+			sharpKeys += '<div class="key sharp" data-note="' + sharpNotes[noteIndex] + '" data-octave="' + octave + '" style="position: absolute; top: 0; bottom: 25%; left: ' + ((k + 0.5) / keyCount * 100) + '%; right: ' + (100 - (k + 1.5) / keyCount * 100) + '%;"><label>' + sharpNotes[noteIndex] + octave + '</label></div>';
+		}
+	}
+	
+	return '<div class="keys">' + baseKeys + sharpKeys + '</div>';
+};
+MIWeb.Audio.UI.Keyboard.prototype.renderControls = function() {
+	var controls = '';
+	
+	controls += '<div><label>Octave Range</label><input name="octaveCount" type="range" min="1" max="8" value="' + this.octaveCount + '" /><span>' + this.octaveCount + '</span></div>';
+	controls += '<div><label>Base Octave</label><input name="octave" type="range" min="1" max="' + (9 - this.octaveCount) + '" value="' + this.octave + '" /><span>' + this.octave + '</span></div>';
+	
+	return '<div class="controls">' + controls + '</div>';
 };var MIWeb = MIWeb || {};
 MIWeb.Audio = MIWeb.Audio || {};
 
@@ -1405,16 +1854,51 @@ for(var i = 0; i <= 100; i++) {
 var wave = new MIWeb.Curve(frames, 'loop');*/
 
 //initialize the synthesizer
-var synth = new MIWeb.Audio.Synthesizer();
+var synth = new MIWeb.Audio.Synthesizer(new MIWeb.Curves.FrameCurve(),new MIWeb.Curves.ControlCurve(),new MIWeb.Curves.ControlCurve());
 synth.debug = false;
 
 //initialize the wav writer
 var wavWriter = new MIWeb.Audio.WAVWriter();
 
 //initialize the curve editors
-var waveEditor = new MIWeb.Curves.CurveEditor(container.querySelector('.curve.wave'), synth.wave, {}, false);
-var amplitudeEditor = new MIWeb.Curves.CurveEditor(container.querySelector('.curve.amplitude'), synth.amplitudeCurve, {}, false);
-var frequencyEditor = new MIWeb.Curves.CurveEditor(container.querySelector('.curve.frequency'), synth.frequencyCurve, {}, false);
+var waveEditor = new MIWeb.Curves.FrameCurveEditor(container.querySelector('.curve.wave'), synth.wave, {}, false);
+var frequencyEditor = new MIWeb.Curves.ControlCurveEditor(container.querySelector('.curve.frequency'), synth.frequencyCurve, {
+    template: [
+        {x: 0, y: 0, d: 1},
+        {x: 0.25, y: 0, d: 1},
+        {x: 0.5, y: 0, d: 1},
+        {x: 0.75, y: 0, d: 1},
+        {x: 1, y: 0, d: 1}
+    ],
+    controls: [
+        {label: 'Pitch Length', min: 0, max: 1, type: 'delta', targets: [{ctrl: 1, prop: 'x'}]},
+        {label: 'Pitch Level', targets: [{ctrl: 1, prop: 'y'},{ctrl: 2, prop: 'y'}]},
+        {label: 'Pitch Damp', min: 0, targets: [{ctrl: 1, prop: 'd'}]},
+        {label: 'Pitch Sustain', min: 0, type: 'delta', targets: [{ctrl: 2, prop: 'x'}]},
+        {label: 'End Length', min: 0, max: 1, type: 'delta', targets: [{ctrl: 3, prop: 'x'}]},
+        {label: 'End Level', targets: [{ctrl: 3, prop: 'y'},{ctrl: 4, prop: 'y'}]},
+        {label: 'End Damp', min: 0, targets: [{ctrl: 3, prop: 'd'}]}
+    ]
+}, false);
+var amplitudeEditor = new MIWeb.Curves.ControlCurveEditor(container.querySelector('.curve.amplitude'), synth.amplitudeCurve, {
+    template: [
+        {x: 0, y: 0, d: 1},
+		{x: 0.002, y: 1, d: 1},
+		{x: 0.2, y: 0.5, d: 1},
+		{x: 0.5, y: 0.5, d: 1},
+		{x: 1, y: 0, d: 1}
+	],
+	controls: [
+		{label: 'Attack Length', min: 0, max: 1, type: 'delta', targets: [{ctrl: 1, prop: 'x'}]},
+        {label: 'Attack Damp', min: 0, targets: [{ctrl: 1, prop: 'd'}]},
+		{label: 'Decay Length', min: 0, max: 1, type: 'delta', targets: [{ctrl: 2, prop: 'x'}]},
+        {label: 'Decay Damp', min: 0, targets: [{ctrl: 2, prop: 'd'}]},
+		{label: 'Sustain Level', min: 0, max: 1, targets: [{ctrl: 2, prop: 'y'},{ctrl: 3, prop: 'y'}]},
+        {label: 'Sustain Length', min: 0, max: 1, type: 'delta', targets: [{ctrl: 3, prop: 'x'}]},
+        {label: 'Death Length', min: 0, max: 1, type: 'delta', targets: [{ctrl: 4, prop: 'x'}]},
+        {label: 'Death Damp', min: 0, targets: [{ctrl: 4, prop: 'd'}]}
+	]
+}, false);
 
 //initialize the keyboard
 var keyboard = new MIWeb.Audio.UI.Keyboard(container.querySelector(".keyboard"), 3, 3, function(e) {
@@ -1432,11 +1916,11 @@ function play() {
 	var src = '';
 	var local = true;
 	if(local) {
-		console.log("prepared (" + ((new Date).valueOf() - timer) + "ms)");
+		//console.log("prepared (" + ((new Date).valueOf() - timer) + "ms)");
 		var data = synth.generate();
-		console.log("generated (" + ((new Date).valueOf() - timer) + "ms)");
+		//console.log("generated (" + ((new Date).valueOf() - timer) + "ms)");
 		src = wavWriter.write(data);
-		console.log("written (" + ((new Date).valueOf() - timer) + "ms)");
+		//console.log("written (" + ((new Date).valueOf() - timer) + "ms)");
 		/*audio.onended = function() {
 			console.log("ended");
 		};*/
@@ -1489,8 +1973,8 @@ function applyPreset(preset, property) {
 	synth.applyPreset(preset, property);
 	
 	waveEditor.setCurve(synth.wave);
-	amplitudeEditor.setCurve(synth.amplitudeCurve);
 	frequencyEditor.setCurve(synth.frequencyCurve);
+	amplitudeEditor.setCurve(synth.amplitudeCurve);
 	
 	container.querySelector(".volume").value = Math.max(0, Math.min(100, Math.round(synth.volume * 100)));
 	container.querySelector(".duration").value = Math.max(0, synth.duration);
@@ -1586,4 +2070,17 @@ container.querySelector(".load").onclick = function() {
 //initialize the synthesizer
 synth.volume = 0.5;
 setNote('C', 4);
-applyPreset('piano');
+//applyPreset('piano');
+applyPreset({
+	wave: new MIWeb.Curves.FrameCurve(
+        [{"point":{"x":0,"y":0},"controlLeft":{"x":0,"y":0},"controlRight":{"x":0.015,"y":0.2}},{"point":{"x":0.1,"y":1},"controlLeft":{"x":-0.05,"y":0},"controlRight":{"x":0.075,"y":0}},{"point":{"x":0.3,"y":-0.35},"controlLeft":{"x":-0.075,"y":0},"controlRight":{"x":0.075,"y":0}},{"point":{"x":0.48,"y":0.23},"controlLeft":{"x":-0.075,"y":0},"controlRight":{"x":0.075,"y":0}},{"point":{"x":0.725,"y":-1},"controlLeft":{"x":-0.1,"y":0},"controlRight":{"x":0.15,"y":0}},{"point":{"x":1,"y":0},"controlLeft":{"x":-0.015,"y":-0.2},"controlRight":{"x":0,"y":0}}],
+		'loop'
+	),
+	frequencyCurve: new MIWeb.Curves.ControlCurve(
+		[{"x":0,"y":0,"d":1},{"x":0.25,"y":0,"d":1},{"x":0.5,"y":0,"d":1},{"x":0.75,"y":0,"d":1},{"x":1,"y":0,"d":1}],
+		'loop'
+	),
+	amplitudeCurve: new MIWeb.Curves.ControlCurve(
+		[{"x":0,"y":0,"d":1},{"x":0.002,"y":1,"d":1},{"x":0.002,"y":1,"d":1},{"x":0.002,"y":1,"d":1},{"x":1,"y":0,"d":0.25}]
+	)
+});

@@ -22,7 +22,7 @@ for(var i = 0; i <= 100; i++) {
 var wave = new MIWeb.Curve(frames, 'loop');*/
 
 //initialize the synthesizer
-var synth = new MIWeb.Audio.Synthesizer(new MIWeb.Curves.FrameCurve(),new MIWeb.Curves.ControlCurve(),new MIWeb.Curves.FrameCurve());
+var synth = new MIWeb.Audio.Synthesizer(new MIWeb.Curves.FrameCurve(),new MIWeb.Curves.ControlCurve(),new MIWeb.Curves.ControlCurve());
 synth.debug = false;
 
 //initialize the wav writer
@@ -30,8 +30,43 @@ var wavWriter = new MIWeb.Audio.WAVWriter();
 
 //initialize the curve editors
 var waveEditor = new MIWeb.Curves.FrameCurveEditor(container.querySelector('.curve.wave'), synth.wave, {}, false);
-var frequencyEditor = new MIWeb.Curves.FrameCurveEditor(container.querySelector('.curve.frequency'), synth.frequencyCurve, {}, false);
-var amplitudeEditor = new MIWeb.Curves.ControlCurveEditor(container.querySelector('.curve.amplitude'), synth.amplitudeCurve, {}, false);
+var frequencyEditor = new MIWeb.Curves.ControlCurveEditor(container.querySelector('.curve.frequency'), synth.frequencyCurve, {
+    template: [
+        {x: 0, y: 0, d: 1},
+        {x: 0.25, y: 0, d: 1},
+        {x: 0.5, y: 0, d: 1},
+        {x: 0.75, y: 0, d: 1},
+        {x: 1, y: 0, d: 1}
+    ],
+    controls: [
+        {label: 'Pitch Length', min: 0, max: 1, type: 'delta', targets: [{ctrl: 1, prop: 'x'}]},
+        {label: 'Pitch Level', targets: [{ctrl: 1, prop: 'y'},{ctrl: 2, prop: 'y'}]},
+        {label: 'Pitch Damp', min: 0, targets: [{ctrl: 1, prop: 'd'}]},
+        {label: 'Pitch Sustain', min: 0, type: 'delta', targets: [{ctrl: 2, prop: 'x'}]},
+        {label: 'End Length', min: 0, max: 1, type: 'delta', targets: [{ctrl: 3, prop: 'x'}]},
+        {label: 'End Level', targets: [{ctrl: 3, prop: 'y'},{ctrl: 4, prop: 'y'}]},
+        {label: 'End Damp', min: 0, targets: [{ctrl: 3, prop: 'd'}]}
+    ]
+}, false);
+var amplitudeEditor = new MIWeb.Curves.ControlCurveEditor(container.querySelector('.curve.amplitude'), synth.amplitudeCurve, {
+    template: [
+        {x: 0, y: 0, d: 1},
+		{x: 0.002, y: 1, d: 1},
+		{x: 0.2, y: 0.5, d: 1},
+		{x: 0.5, y: 0.5, d: 1},
+		{x: 1, y: 0, d: 1}
+	],
+	controls: [
+		{label: 'Attack Length', min: 0, max: 1, type: 'delta', targets: [{ctrl: 1, prop: 'x'}]},
+        {label: 'Attack Damp', min: 0, targets: [{ctrl: 1, prop: 'd'}]},
+		{label: 'Decay Length', min: 0, max: 1, type: 'delta', targets: [{ctrl: 2, prop: 'x'}]},
+        {label: 'Decay Damp', min: 0, targets: [{ctrl: 2, prop: 'd'}]},
+		{label: 'Sustain Level', min: 0, max: 1, targets: [{ctrl: 2, prop: 'y'},{ctrl: 3, prop: 'y'}]},
+        {label: 'Sustain Length', min: 0, max: 1, type: 'delta', targets: [{ctrl: 3, prop: 'x'}]},
+        {label: 'Death Length', min: 0, max: 1, type: 'delta', targets: [{ctrl: 4, prop: 'x'}]},
+        {label: 'Death Damp', min: 0, targets: [{ctrl: 4, prop: 'd'}]}
+	]
+}, false);
 
 //initialize the keyboard
 var keyboard = new MIWeb.Audio.UI.Keyboard(container.querySelector(".keyboard"), 3, 3, function(e) {
@@ -205,20 +240,15 @@ synth.volume = 0.5;
 setNote('C', 4);
 //applyPreset('piano');
 applyPreset({
-	wave: new MIWeb.Curves.FrameCurve([
-		{"point":{"x":0,"y":0},"controlLeft":{"x":0,"y":0},"controlRight":{"x":0.017,"y":0.1}},
-		{"point":{"x":0.25,"y":1},"controlLeft":{"x":-0.125,"y":0},"controlRight":{"x":0.125,"y":0}},
-		{"point":{"x":0.5,"y":0},"controlLeft":{"x":-0.017,"y":0.1},"controlRight":{"x":0,"y":0}}
-	], 'ping-pong-y'),
-	frequencyCurve: new MIWeb.Curves.FrameCurve([
-		{point: {x: 0, y: 0}, controlLeft: {x: 0, y: 0}, controlRight: {x: 0.25, y: 0}},
-		{point: {x: 1, y: 0}, controlLeft: {x: -0.25, y: 0}, controlRight: {x: 0, y: 0}}
-	], 'loop'),
-	amplitudeCurve: new MIWeb.Curves.ControlCurve([
-		{x: 0, y: 0, d: 1},
-		{x: 0.002, y: 1, d: 1},
-		{x: 0.2, y: 0.5, d: 1},
-		{x: 0.5, y: 0.5, d: 1},
-		{x: 1, y: 0, d: 1}
-	], 'loop')
+	wave: new MIWeb.Curves.FrameCurve(
+        [{"point":{"x":0,"y":0},"controlLeft":{"x":0,"y":0},"controlRight":{"x":0.015,"y":0.2}},{"point":{"x":0.1,"y":1},"controlLeft":{"x":-0.05,"y":0},"controlRight":{"x":0.075,"y":0}},{"point":{"x":0.3,"y":-0.35},"controlLeft":{"x":-0.075,"y":0},"controlRight":{"x":0.075,"y":0}},{"point":{"x":0.48,"y":0.23},"controlLeft":{"x":-0.075,"y":0},"controlRight":{"x":0.075,"y":0}},{"point":{"x":0.725,"y":-1},"controlLeft":{"x":-0.1,"y":0},"controlRight":{"x":0.15,"y":0}},{"point":{"x":1,"y":0},"controlLeft":{"x":-0.015,"y":-0.2},"controlRight":{"x":0,"y":0}}],
+		'loop'
+	),
+	frequencyCurve: new MIWeb.Curves.ControlCurve(
+		[{"x":0,"y":0,"d":1},{"x":0.25,"y":0,"d":1},{"x":0.5,"y":0,"d":1},{"x":0.75,"y":0,"d":1},{"x":1,"y":0,"d":1}],
+		'loop'
+	),
+	amplitudeCurve: new MIWeb.Curves.ControlCurve(
+		[{"x":0,"y":0,"d":1},{"x":0.002,"y":1,"d":1},{"x":0.002,"y":1,"d":1},{"x":0.002,"y":1,"d":1},{"x":1,"y":0,"d":0.25}]
+	)
 });

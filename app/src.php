@@ -1,4 +1,6 @@
 <?php
+die('automatic source build is disabled.');
+
 $type = $_GET['type'];
 $mime_type = false;
 switch($type) {

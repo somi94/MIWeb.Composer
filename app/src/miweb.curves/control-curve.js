@@ -23,9 +23,7 @@ MIWeb.Curves.ControlCurve.prototype.getValue = function(x) {
 		if(x >= last.x && x <= this.controls[c].x) {
 			var d = this.controls[c].x - last.x;
 			var p = d != 0 ? (x - last.x) / d : 0; 
-			
-			var y = p * (this.controls[c].y - last.y);
-			
+
 			return last.y + Math.pow(p, this.controls[c].d) * (this.controls[c].y - last.y);
 		}
 		last = this.controls[c];

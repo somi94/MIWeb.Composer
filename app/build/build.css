@@ -1,87 +1,4 @@
-.curve {
-	background-color: #333;
-	display: inline-block;
-	position: relative;
-	width: 200px;
-	height: 50px;
-}
-
-.curve svg {
-	-webkit-touch-callout: none; /* iOS Safari */
-	-webkit-user-select: none; /* Safari */
-	 -khtml-user-select: none; /* Konqueror HTML */
-	   -moz-user-select: none; /* Firefox */
-		-ms-user-select: none; /* Internet Explorer/Edge */
-			user-select: none; /* Non-prefixed version, currently
-								  supported by Chrome and Opera */
-}
-
-.curve, .curve * {
-	box-sizing: border-box;
-}
-
-.curve .controls {
-	background-color: #fff;
-	bottom: 0;
-	left: 0;
-	position: absolute;
-}
-
-.curve .option {
-	display: inline-block;
-	max-width: 250px;
-	padding: 5px 15px;
-	position: relative;
-}
-
-.curve .option label {
-	display: inline-block;
-	width: 40%;
-}
-
-.curve .option input,
-.curve .option select {
-	text-align: center;
-	width: 60%;
-}
-
-.curve .option.vector2 input {
-	width: 30%;
-}
-
-.curve-window-controls {
-	display: inline-block; 
-	position: absolute; 
-	top: 0; 
-	right: 0;
-}
-
-.curve-popup {
-	position: absolute;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-}
-
-.curve-popup .curve-popup-overlay {
-	background-color: rgba(0,0,0,0.5);
-	position: fixed;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-}
-
-.curve-popup .curve-popup-content {
-	position: fixed;
-	top: 5%;
-	bottom: 5%;
-	left: 5%;
-	right: 5%;
-	width: auto;
-	height: auto;
-}.keyboard {
+.keyboard {
 	height: 300px;
 	position: relative;
 }
@@ -170,6 +87,89 @@
 	position: absolute;
 	right: 8px;
 	top: 5px;
+}.curve {
+	background-color: #333;
+	display: inline-block;
+	position: relative;
+	width: 200px;
+	height: 50px;
+}
+
+.curve svg {
+	-webkit-touch-callout: none; /* iOS Safari */
+	-webkit-user-select: none; /* Safari */
+	 -khtml-user-select: none; /* Konqueror HTML */
+	   -moz-user-select: none; /* Firefox */
+		-ms-user-select: none; /* Internet Explorer/Edge */
+			user-select: none; /* Non-prefixed version, currently
+								  supported by Chrome and Opera */
+}
+
+.curve, .curve * {
+	box-sizing: border-box;
+}
+
+.curve .controls {
+	background-color: #fff;
+	bottom: 0;
+	left: 0;
+	position: absolute;
+}
+
+.curve .option {
+	display: inline-block;
+	max-width: 250px;
+	padding: 5px 15px;
+	position: relative;
+}
+
+.curve .option label {
+	display: inline-block;
+	width: 40%;
+}
+
+.curve .option input,
+.curve .option select {
+	text-align: center;
+	width: 60%;
+}
+
+.curve .option.vector2 input {
+	width: 30%;
+}
+
+.curve-window-controls {
+	display: inline-block; 
+	position: absolute; 
+	top: 0; 
+	right: 0;
+}
+
+.curve-popup {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+}
+
+.curve-popup .curve-popup-overlay {
+	background-color: rgba(0,0,0,0.5);
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+}
+
+.curve-popup .curve-popup-content {
+	position: fixed;
+	top: 5%;
+	bottom: 5%;
+	left: 5%;
+	right: 5%;
+	width: auto;
+	height: auto;
 }.synth * {
 	box-sizing: border-box;
 }
