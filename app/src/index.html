@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Web Synth</title>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+	
+	<link data-build="build" rel="stylesheet" type="text/css" href="miweb.audio/audio-ui-keyboard.css" />
+	<link data-build="build" rel="stylesheet" type="text/css" href="miweb.curves/curve-editor.css" />
+	<link data-build="build" rel="stylesheet" type="text/css" href="index.css" />
+</head>
+<body>
+	<div class="container synth">
+		<div class="row">
+			<div class="col-md-12">
+				<h1>Synthesizer</h1>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-6">
+				<h2>Presets</h2>
+				<div class="info">
+					Global sampler configuration templates.<br>
+					Overrides the sampler configuration with predefined curves and values.<br>
+					Presets for a single curve are available above the specific curve.
+				</div>
+				<div class="presets">
+					<label>Instruments</label>
+					<!--<button class="preset" data-preset="constant">Constant</button>-->
+					<button class="btn btn-secondary preset" data-preset="piano">Piano</button>
+					<button class="btn btn-secondary preset" data-preset="organ">Organ</button>
+					<!--<button class="preset" data-preset="violin">Violin</button>-->
+				</div>
+				<div class="presets">
+					<label>SFX</label>
+					<button class="btn btn-secondary preset" data-preset="jump">Jump</button>
+					<button class="btn btn-secondary preset" data-preset="warp">Warp</button>
+					<button class="btn btn-secondary preset" data-preset="engine">Engine</button>
+				</div>
+				<div class="presets">
+					<label>Waves</label>
+					<button class="btn btn-secondary preset" data-preset="sine">Sine</button>
+				</div>
+			</div>
+			<div class="col-md-6 options">
+				<h2>Options</h2>
+				<div class="info">
+					Sampler options.<br>
+					Volume controls the results amplitude.<br>
+					Duration controls the sample length in seconds.
+				</div>
+				<div class="row">
+					<div class="col-md-3">
+						<label>Volume</label>
+					</div>
+					<div class="col-md-9">
+						<input type="range" class="volume" min="0" max="100" value="50">
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-md-3">
+						<label>Duration</label>
+					</div>
+					<div class="col-md-9">
+						<input type="text" class="duration" value="1.5">
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row curves">
+			<div class="col-md-4">
+				<div class="curve-container">
+					<label>Wave</label>
+					<div class="info">
+						The base wave.<br>
+						Controls the appearance of the sound.
+					</div>
+					<div class="presets">
+						<button class="btn btn-secondary preset" data-preset="sine" data-property="wave">Sine</button>
+						<button class="btn btn-secondary preset" data-preset="piano" data-property="wave">Piano</button>
+						<!--<button class="btn btn-secondary preset" data-preset="organ" data-property="wave">Organ</button>-->
+						<!--<button class="preset" data-preset="violin" data-property="wave">Violin</button>-->
+						<button class="btn btn-secondary preset" data-preset="jump" data-property="wave">Jump</button>
+					</div>
+					<div class="curve wave"></div>
+				</div>
+			</div>
+			<div class="col-md-4">
+				<div class="curve-container">
+					<label>Frequency (Pitch)</label>
+					<div class="info">
+						Changes the frequency over time.<br>
+						Use it to pitch the resulting sound.
+					</div>
+					<div class="presets">
+						<button class="btn btn-secondary preset" data-preset="sine" data-property="frequencyCurve">Constant</button>
+						<button class="btn btn-secondary preset" data-preset="jump" data-property="frequencyCurve">Jump</button>
+						<!--<button class="preset" data-preset="sine" data-property="frequencyCurve">Sine</button>
+						<button class="preset" data-preset="piano" data-property="frequencyCurve">Piano</button>
+						<button class="preset" data-preset="violin" data-property="frequencyCurve">Violin</button>-->
+					</div>
+					<div class="curve frequency"></div>
+				</div>
+			</div>
+			<div class="col-md-4">
+				<div class="curve-container">
+					<label>Amplitude (Volume)</label>
+					<div class="info">
+						Changes the amplitude over time.<br>
+						Use it to simulate attack and decay of the sound.
+					</div>
+					<div class="presets">
+						<button class="btn btn-secondary preset" data-preset="sine" data-property="amplitudeCurve">Constant</button>
+						<!--<button class="preset" data-preset="sine" data-property="amplitudeCurve">Sine</button>-->
+						<button class="btn btn-secondary preset" data-preset="piano" data-property="amplitudeCurve">Piano</button>
+						<button class="btn btn-secondary preset" data-preset="organ" data-property="amplitudeCurve">Organ</button>
+						<button class="btn btn-secondary preset" data-preset="warp" data-property="amplitudeCurve">Warp</button>
+						<!--<button class="preset" data-preset="violin" data-property="amplitudeCurve">Violin</button>-->
+					</div>
+					<div class="curve amplitude"></div>
+				</div>
+			</div>
+		</div>
+		<div class="row interaction">
+			<div class="col-md-8">
+				<button class="btn btn-primary play">Play</button>
+			</div>
+			<div class="col-md-2">
+				<button class="btn btn-primary download">Download</button>
+			</div>
+			<div class="col-md-1">
+				<button class="btn btn-primary save">Save</button>
+			</div>
+			<div class="col-md-1">
+				<button class="btn btn-primary load">Load</button>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-12">
+				<h2>Keyboard</h2>
+				<div class="info">
+					Use it to define the base pitch of the sound.<br>
+					Uses notes (C-B) and octaves (1-8) to control the frequency.
+				</div>
+				<div class="keyboard"></div>
+			</div>
+		</div>
+	</div>
+
+	<script data-build="build" type="text/javascript" src="miweb.audio/audio-clip.js"></script>
+	<script data-build="build" type="text/javascript" src="miweb.audio/audio-synthesizer.js"></script>
+	<script data-build="build" type="text/javascript" src="miweb.audio/audio-ui-keyboard.js"></script>
+	<script data-build="build" type="text/javascript" src="miweb.audio/audio-wavwriter.js"></script>
+	<script data-build="build" type="text/javascript" src="miweb.curves/curve.js"></script>
+	<script data-build="build" type="text/javascript" src="miweb.curves/curve-editor.js"></script>
+	<script data-build="build" type="text/javascript" src="index.js"></script>
+</body>
+</html>
