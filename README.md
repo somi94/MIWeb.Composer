@@ -8,16 +8,18 @@ Feel free to use and improve the tool. Pull requests are welcome.
 ## Setup
 Basically you have 3 Options to use this app.
 
-### Run build
+### Run build version
 If you just want to test the build version of this app, do the following:
 1. Download the app/build folder
 2. Open index.html in a modern web browser
 
+### Run dev version
 If you want to improve it, follow these steps:
 1. Download the app/src folder
 2. Edit files as pleased
 3. Open index.html in a modern web browser
 
+### Run containerized
 If you want to use it as a containerized application, follow the steps below:
 1. Install docker and docker compose on your system
 2. Clone or download this directory
