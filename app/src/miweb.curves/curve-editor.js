@@ -1,31 +1,18 @@
-//TODO:
-//solve auto resizing window behaviour while dragging (zoom levels (=steps)?)
-//add/remove frames
-//show full synth source(=config) (formatted json)
-//make synth source editable
-//play button in popup
-//handle size?
-//make loops easier?
-//improve presets
-//dont render everything again on draw, dont redraw on drag/input
-
 var MIWeb = MIWeb || {};
 MIWeb.Curves = MIWeb.Curves || {};
 
 MIWeb.Curves.CurveEditor = function(container, curve, options, maximize) {
 	var config = {
-		dotSize: 5,
 		drawAxes: true,
 		drawGrid: true,
-		drawHandles: true,
 		drawDots: true,
-		drawLoop: true,
 		drawControls: true,
+		
 		axesWeight: 2,
 		gridWeight: 1,
+		dotSize: 5,
 		curveColor: "black",
-		handleColor: "#f00",
-		handleSelectedColor: "#0f0",
+		
 		gridColor: "#666",
 		loopColor: "#ccc",
 		size: {x: null, y: null},
@@ -35,9 +22,8 @@ MIWeb.Curves.CurveEditor = function(container, curve, options, maximize) {
 		keepAspectRatio: false,
 		minimizeOptions: {
 			drawGrid: false,
-			drawHandles: false,
-			drawDots: false,
 			drawControls: false,
+			drawDots: false,
 			axesWeight: 1,
 			curveColor: "#ccc"/*,
 			size: {x: 200, y: 50}*/
@@ -45,9 +31,7 @@ MIWeb.Curves.CurveEditor = function(container, curve, options, maximize) {
 	};
 	
 	if(options) {
-		for(var optionName in options) { 
-			config[optionName] = options[optionName]; 
-		}
+		MIWeb.Utilities.Object.merge(config, options);
 	}
 	
 	this.defaultConfig = config;
@@ -59,12 +43,9 @@ MIWeb.Curves.CurveEditor = function(container, curve, options, maximize) {
 	this.minimized = !maximize;
 	this.setCurve(curve);
 };
-MIWeb.Curves.CurveEditor.prototype.setCurve = function(curve) {
+MIWeb.Curves.CurveEditor.prototype.setCurve = function(curve, silent) {
 	this.curve = curve;
-	this.selected = -1;
-	this.lastSelected = -1;
-	this.grabbed = false;
-	this.draw();
+	if(!silent) this.draw();
 };
 MIWeb.Curves.CurveEditor.prototype.draw = function() {
 	var editor = this;
@@ -146,56 +127,14 @@ MIWeb.Curves.CurveEditor.prototype.draw = function() {
 	window.onresize = function(event) {
 		editor.draw();
 	};
-	
-	//drag & drop
-	if(this.config.dragable && this.config.drawControls) {
-		var svg = this.container.getElementsByTagName("svg")[0];
-		svg.onmouseout = function() {
-			//editor.grabbed = false;
-		};
-		svg.onmouseup = function() {
-			editor.grabbed = false;
-		};
-		svg.onmousemove = function(e) {
-			if(e.buttons && e.button === 0 && editor.grabbed) {
-				//var x = e.pageX - editor.container.offsetLeft;
-				//var y = e.pageY - editor.container.offsetTop;
-				//x -= editor.curveContext.offset.x;
-				//y = (editor.curveContext.canvasSize.y - y) - editor.curveContext.offset.y;
-				//x /= editor.curveContext.pxPerUnit;
-				//y /= editor.curveContext.pxPerUnit;
-				//var x = e.clientX / editor.curveContext.pxPerUnit / editor.curveContext.scale.x;
-				//var y = e.clientY / editor.curveContext.pxPerUnit / editor.curveContext.scale.y;
-				var x = e.movementX / editor.curveContext.pxPerUnit / editor.curveContext.scale.x;
-				var y = -e.movementY / editor.curveContext.pxPerUnit / editor.curveContext.scale.y;
-
-				var frame = editor.curve.frames[editor.grabbed[0]];
-				if(editor.grabbed[1] == 0) {
-					frame.point.x += x;
-					frame.point.y += y;
-				} else {
-					//x -= frame.point.x;
-					//y -= frame.point.y;
-					if(editor.grabbed[1] == 1) {
-						frame.controlLeft.x += x;
-						frame.controlLeft.y += y;
-					} else if(editor.grabbed[1] == 2) {
-						frame.controlRight.x += x;
-						frame.controlRight.y += y;
-					}
-				}
-				
-				editor.curve.frames[editor.grabbed[0]] = frame;
-				editor.draw();
-			}
-		};
-	}
-	
-	this.lastSelected = this.selected;
+};
+MIWeb.Curves.CurveEditor.prototype.getCurveBounds = function() {
+	return {
+		min: {x: 0, y: 0},
+		max: {x: this.curve.getLength(), y: 1}
+	};
 };
 MIWeb.Curves.CurveEditor.prototype.setupCurveContext = function() {
-	var frameCount = this.curve.frames.length;
-	
 	this.curveContext = {
 		scale: {x: 1, y: 1},
 		//offset: {x: 0, y: 0},
@@ -215,38 +154,13 @@ MIWeb.Curves.CurveEditor.prototype.setupCurveContext = function() {
 		pxPerUnit: 100
 	};
 	
-	if(this.curveContext.canvasSize.x < 0 || this.curveContext.canvasSize.y <= 0 || !this.curve || !this.curve.frames) {
+	if(this.curveContext.canvasSize.x < 0 || this.curveContext.canvasSize.y <= 0 || !this.curve || !this.curve.getLength()) {
 		return;
 	}
 	
-	for(var f = 0; f < frameCount; f++) {
-		var frame = this.curve.frames[f];
-		frame.controlLeft.x = Math.min(0,Math.max(frame.controlLeft.x, f > 0 ? this.curve.frames[f - 1].point.x - frame.point.x : 0));
-		frame.controlRight.x = Math.max(0,Math.min(frame.controlRight.x, f < frameCount - 1 ? this.curve.frames[f + 1].point.x - frame.point.x : 0));
-		this.curve.frames[f] = frame;
-		
-		if(f == 0) {
-			this.curveContext.fullBounds.min = {
-				x: Math.min(frame.point.x, frame.point.x + frame.controlLeft.x, frame.point.x + frame.controlRight.x),
-				y: Math.min(frame.point.y, frame.point.y + frame.controlLeft.y, frame.point.y + frame.controlRight.y)
-			};
-			this.curveContext.fullBounds.max = {
-				x: Math.max(frame.point.x, frame.point.x + frame.controlLeft.x, frame.point.x + frame.controlRight.x),
-				y: Math.max(frame.point.y, frame.point.y + frame.controlLeft.y, frame.point.y + frame.controlRight.y)
-			};
-		} else {
-			this.curveContext.fullBounds.min.x = Math.min(this.curveContext.fullBounds.min.x, frame.point.x, frame.point.x + frame.controlLeft.x, frame.point.x + frame.controlRight.x);
-			this.curveContext.fullBounds.max.x = Math.max(this.curveContext.fullBounds.max.x, frame.point.x, frame.point.x + frame.controlLeft.x, frame.point.x + frame.controlRight.x);
-			this.curveContext.fullBounds.min.y = Math.min(this.curveContext.fullBounds.min.y, frame.point.y, frame.point.y + frame.controlLeft.y, frame.point.y + frame.controlRight.y);
-			this.curveContext.fullBounds.max.y = Math.max(this.curveContext.fullBounds.max.y, frame.point.y, frame.point.y + frame.controlLeft.y, frame.point.y + frame.controlRight.y);
-		}
-	}
-	
-	if(this.curve.end == 'ping-pong-y' || this.curve.end == 'ping-pong-xy') {
-		var fullExtentsY = Math.max(Math.abs(this.curveContext.fullBounds.min.y), Math.abs(this.curveContext.fullBounds.max.y));
-		this.curveContext.fullBounds.min.y = -fullExtentsY;
-		this.curveContext.fullBounds.max.y = fullExtentsY;
-	}
+	this.curveContext.fullBounds = this.getCurveBounds();
+	this.curveContext.fullBounds.size = {};
+	this.curveContext.fullBounds.center = {};
 	
 	var padding = {
 		x: (this.curveContext.fullBounds.max.x - this.curveContext.fullBounds.min.x) * 0.1 || 0.1,
@@ -278,8 +192,6 @@ MIWeb.Curves.CurveEditor.prototype.setupCurveContext = function() {
 		this.curveContext.scale.x = Math.min(this.curveContext.scale.x,this.curveContext.scale.y);
 		this.curveContext.scale.y = this.curveContext.scale.x;
 	}
-	
-	console.log(this.curveContext);
 };
 MIWeb.Curves.CurveEditor.prototype.renderCanvas = function() {
 	this.canvas = this.container.querySelector('svg [data-id="canvas"]');
@@ -409,173 +321,40 @@ MIWeb.Curves.CurveEditor.prototype.renderBackground = function(axes,grid) {
 	
 	this.background.innerHTML = canvas;
 };
-MIWeb.Curves.CurveEditor.prototype.renderCurve = function(frames) {
-	var frames = this.getCurveFrames();
-	
-	this.frameViews = Array.apply(null, this.container.querySelectorAll('[data-id="frame"]'));
-	if(!this.frameViews) {
-		this.frameViews = [];
+MIWeb.Curves.CurveEditor.prototype.renderCurve = function() {
+	this.curveCanvas = this.container.querySelector('[data-id="curve"]');
+	if(!this.curveCanvas) {
+		this.curveCanvas = document.createElementNS("http://www.w3.org/2000/svg", "g");
+		this.curveCanvas.setAttribute('data-id','curve');
+		this.canvas.appendChild(this.curveCanvas);
 	}
 	
-	if(frames.length > this.frameViews.length) {
-		//create new views
-		var dragable = [];
-		for(var f = this.frameViews.length; f < frames.length; f++) {
-			this.frameViews[f] = document.createElementNS("http://www.w3.org/2000/svg", "g");
-			this.frameViews[f].setAttribute('data-id','frame');
-			this.frameViews[f].parts = {};
-			
-			var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-			path.setAttribute('fill', 'transparent');
-			this.frameViews[f].parts.path = path;
-			this.frameViews[f].appendChild(path);
-			
-			var pathHandleL = document.createElementNS("http://www.w3.org/2000/svg", "path");
-			pathHandleL.setAttribute('fill', 'transparent');
-			this.frameViews[f].parts.pathHandleL = pathHandleL;
-			this.frameViews[f].appendChild(pathHandleL);
-			
-			var pathHandleR = document.createElementNS("http://www.w3.org/2000/svg", "path");
-			pathHandleR.setAttribute('fill', 'transparent');
-			this.frameViews[f].parts.pathHandleR = pathHandleR;
-			this.frameViews[f].appendChild(pathHandleR);
-			
-			var pointHandleL = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-			pointHandleL.setAttribute('data-frame', f);
-			pointHandleL.setAttribute('data-grab', 1);
-			dragable.push(pointHandleL);
-			this.frameViews[f].parts.pointHandleL = pointHandleL;
-			this.frameViews[f].appendChild(pointHandleL);
-			
-			var pointHandleR = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-			pointHandleR.setAttribute('data-frame', f);
-			pointHandleR.setAttribute('data-grab', 2);
-			dragable.push(pointHandleR);
-			this.frameViews[f].parts.pointHandleR = pointHandleR;
-			this.frameViews[f].appendChild(pointHandleR);
-			
-			var point = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-			point.setAttribute('data-frame', f);
-			point.setAttribute('data-grab', 0);
-			dragable.push(point);
-			this.frameViews[f].parts.point = point;
-			this.frameViews[f].appendChild(point);
-			
-			this.canvas.appendChild(this.frameViews[f]);
-		}
-		
-		var editor = this;
-		for(var d = 0; d < dragable.length; d++) {
-			dragable[d].onclick = function(e) {
-				editor.selected = e.target.getAttribute("data-frame");
-				editor.draw();
-			};
-			
-			if(this.config.dragable && dragable[d].hasAttribute("data-grab")) {
-				dragable[d].onmousedown = function(e) {
-					editor.selected = e.target.getAttribute("data-frame");
-					editor.grabbed = [e.target.getAttribute("data-frame"),e.target.getAttribute("data-grab")];
-				};
-			}
-		}
-	} else if(frames.length < this.frameViews.length) {
-		//remove old views
-		for(var f = frames.length; f < this.frameViews.length; f++) {
-			this.frameViews[f].parentNode.removeChild(this.frameViews[f]);
-		}
-		this.frameViews = this.frameViews.slice(0, frames.length);
-	}
-	
-	//update existing views
-	var scale = this.curveContext.scale;
 	var ppu = this.curveContext.pxPerUnit;
-	for(var f = 0; f < frames.length; f++) {
-		var point = {
-			x: frames[f].point.x * scale.x,
-			y: frames[f].point.y * scale.y
-		};
-		var handle = {
-			x: frames[f].controlRight.x * scale.x + point.x,
-			y: frames[f].controlRight.y * scale.y + point.y
-		};
-		
-		if(f < frames.length - 1) {
-			var nextPoint = {
-				x: frames[f + 1].point.x * scale.x,
-				y: frames[f + 1].point.y * scale.y
-			};
-			var nextHandle = {
-				x: frames[f + 1].controlLeft.x * scale.x + nextPoint.x,
-				y: frames[f + 1].controlLeft.y * scale.y + nextPoint.y
-			};
-		
-			this.frameViews[f].parts.path.setAttribute('d',
-				"M" + point.x + " " + point.y + 
-				" C " + handle.x + " " + handle.y + 
-				", " + nextHandle.x + " " + nextHandle.y + 
-				", " + nextPoint.x + " " + nextPoint.y
-			);
-			this.frameViews[f].parts.path.setAttribute('stroke', (frames[f + 1].virtual ? this.config.loopColor : this.config.curveColor));
-		} else {
-			this.frameViews[f].parts.path.setAttribute('d','');
-		}
-		this.frameViews[f].parts.path.setAttribute('stroke-width',this.config.gridWeight / ppu);
-		
-		var stroke = "";
-		if(f == this.selected) {
-			stroke = this.config.curveColor;
-		}
-			
-		if(this.config.drawDots && !frames[f].virtual) {
-			this.frameViews[f].parts.point.setAttribute('cx', point.x);
-			this.frameViews[f].parts.point.setAttribute('cy', point.y);
-			this.frameViews[f].parts.point.setAttribute('r', this.config.dotSize / ppu);
-			this.frameViews[f].parts.point.setAttribute('stroke', stroke);
-			this.frameViews[f].parts.point.setAttribute('stroke-width',this.config.gridWeight / ppu);
-		} else {
-			this.frameViews[f].parts.point.setAttribute('r',0);
-			this.frameViews[f].parts.point.setAttribute('stroke-width',0);
-		}
-		
-		if(this.config.drawHandles && !frames[f].virtual) {
-			var handleColor = f == this.selected ? this.config.handleSelectedColor : this.config.handleColor;
+	var strokeWidth = this.config.gridWeight / ppu;
 	
-			this.frameViews[f].parts.pathHandleL.setAttribute('d',
-				"M" + point.x + " " + point.y + 
-				" L " + (point.x + frames[f].controlLeft.x * scale.x) + " " + (point.y + frames[f].controlLeft.y * scale.y)
-			);
-			this.frameViews[f].parts.pathHandleL.setAttribute('stroke', handleColor);
-			this.frameViews[f].parts.pathHandleL.setAttribute('stroke-width',this.config.gridWeight / ppu);
+	var curve = '';
+	
+	var length = this.curve.getLength();
+	if(length) {
+		var pathCount = 100;
+		var pathLength = length / pathCount;
+		var x,y,x1,y1;
+		for(var p = 0; p < pathCount - 1; p++) {
+			if(p == 0) {
+				x = p * pathLength;
+				y = this.curve.getValue(x);
+			}
+			x1 = (p + 1) * pathLength;
+			y1 = this.curve.getValue(x1);
 			
-			this.frameViews[f].parts.pathHandleR.setAttribute('d',
-				"M" + point.x + " " + point.y + 
-				" L " + (point.x + frames[f].controlRight.x * scale.x) + " " + (point.y + frames[f].controlRight.y * scale.y)
-			);
-			this.frameViews[f].parts.pathHandleR.setAttribute('stroke', handleColor);
-			this.frameViews[f].parts.pathHandleR.setAttribute('stroke-width',this.config.gridWeight / ppu);
-			
-			this.frameViews[f].parts.pointHandleL.setAttribute('cx', point.x + frames[f].controlLeft.x * scale.x);
-			this.frameViews[f].parts.pointHandleL.setAttribute('cy', point.y + frames[f].controlLeft.y * scale.y);
-			this.frameViews[f].parts.pointHandleL.setAttribute('r', this.config.dotSize / ppu);
-			this.frameViews[f].parts.pointHandleL.setAttribute('fill', handleColor);
-			this.frameViews[f].parts.pointHandleL.setAttribute('stroke', stroke);
-			this.frameViews[f].parts.pointHandleL.setAttribute('stroke-width',this.config.gridWeight / ppu);
-			
-			this.frameViews[f].parts.pointHandleR.setAttribute('cx', point.x + frames[f].controlRight.x * scale.x);
-			this.frameViews[f].parts.pointHandleR.setAttribute('cy', point.y + frames[f].controlRight.y * scale.y);
-			this.frameViews[f].parts.pointHandleR.setAttribute('r', this.config.dotSize / ppu);
-			this.frameViews[f].parts.pointHandleR.setAttribute('fill', handleColor);
-			this.frameViews[f].parts.pointHandleR.setAttribute('stroke', stroke);
-			this.frameViews[f].parts.pointHandleR.setAttribute('stroke-width',this.config.gridWeight / ppu);
-		} else {
-			this.frameViews[f].parts.pointHandleL.setAttribute('r', 0);
-			this.frameViews[f].parts.pointHandleL.setAttribute('stroke-width',0);
-			this.frameViews[f].parts.pointHandleR.setAttribute('r', 0);
-			this.frameViews[f].parts.pointHandleR.setAttribute('stroke-width',0);
-			this.frameViews[f].parts.pathHandleL.setAttribute('d', '');
-			this.frameViews[f].parts.pathHandleR.setAttribute('d', '');
+			curve += '<path d="M' + x + ' ' + y + ' L ' + x1 + ' ' + y1 + '" fill="transparent" stroke-width="' + strokeWidth + '" stroke="' + this.config.curveColor + '" />';
+		
+			x = x1;
+			y = y1;
 		}
 	}
+	
+	this.curveCanvas.innerHTML = curve;
 };
 MIWeb.Curves.CurveEditor.prototype.renderControls = function() {
 	this.controls = this.container.querySelector('.controls');
@@ -583,66 +362,6 @@ MIWeb.Curves.CurveEditor.prototype.renderControls = function() {
 		this.controls = document.createElement("div");
 		this.controls.className = 'controls';
 		this.container.appendChild(this.controls);
-	}
-	
-	var selectedFrame = this.selected >= 0 && this.selected < this.curve.frames.length ? this.curve.frames[this.selected] : null;
-	var controls = '';
-	controls += '<div class="option"><label>end</label>';
-	controls += '<select name="curve-end" onchange="draw();">';
-	controls += '<option value="">None</option>';
-	controls += '<option value="loop" ' + (this.curve.end == 'loop' ? 'selected' : '') + '>Loop</option>';
-	controls += '<option value="ping-pong-x" ' + (this.curve.end == 'ping-pong-x' ? 'selected' : '') + '>Ping Pong X</option>';
-	controls += '<option value="ping-pong-y" ' + (this.curve.end == 'ping-pong-y' ? 'selected' : '') + '>Ping Pong Y</option>';
-	controls += '<option value="ping-pong-xy" ' + (this.curve.end == 'ping-pong-xy' ? 'selected' : '') + '>Ping Pong XY</option>';
-	controls += '</select></div>';
-	if(selectedFrame) {
-		controls += '<div class="option vector2"><label>point</label>';
-		controls += '<input type="text" name="frame-point-x" value="' + (selectedFrame ? selectedFrame.point.x : '') + '" />';
-		controls += '<input type="text" name="frame-point-y" value="' + (selectedFrame ? selectedFrame.point.y : '') + '" /></div>';
-		controls += '<div class="option vector2"><label>handle left</label>';
-		controls += '<input type="text" name="frame-controlLeft-x" value="' + (selectedFrame ? selectedFrame.controlLeft.x : '') + '" />';
-		controls += '<input type="text" name="frame-controlLeft-y" value="' + (selectedFrame ? selectedFrame.controlLeft.y : '') + '" /></div>';
-		controls += '<div class="option vector2"><label>handle right</label>';
-		controls += '<input type="text" name="frame-controlRight-x" value="' + (selectedFrame ? selectedFrame.controlRight.x : '') + '" />';
-		controls += '<input type="text" name="frame-controlRight-y" value="' + (selectedFrame ? selectedFrame.controlRight.y : '') + '" /></div>';
-	}
-	
-	this.controls.innerHTML = controls;
-	
-	//add input events
-	if(this.config.drawControls) {
-		var controls = this.controls.querySelectorAll("input, select");
-		var editor = this;
-		for(var c = 0; c < controls.length; c++) {
-			controls[c].onchange = function() {
-				//var selectedFrame = editor.selected >= 0 && editor.selected < editor.curve.frames.length ? editor.curve.frames[editor.selected] : null;
-				var target = editor;
-				var propertySplit = this.getAttribute('name').split('-');
-				if(propertySplit[0] == 'frame') {
-					target = editor.selected >= 0 && editor.selected < editor.curve.frames.length ? editor.curve.frames[editor.selected] : null;
-					propertySplit = propertySplit.slice(1);
-				}
-				
-				if(!target || !propertySplit) {
-					return;
-				}
-				
-				for(var p = 0; p < propertySplit.length - 1; p++) {
-					if(!target[propertySplit[p]]) {
-						return;
-					}
-					target = target[propertySplit[p]];
-				}
-				
-				var val = this.value;
-				if(!isNaN(parseFloat(val)) && isFinite(val)) {
-					val = parseFloat(val);
-				}
-				
-				target[propertySplit[propertySplit.length - 1]] = val;		
-				editor.draw();
-			};
-		}
 	}
 };
 MIWeb.Curves.CurveEditor.prototype.renderWindowOptions = function() {
@@ -666,11 +385,12 @@ MIWeb.Curves.CurveEditor.prototype.renderWindowOptions = function() {
 		
 	if(!this.minimized) {
 		this.windowOptions.querySelector('button.display-code').onclick = function() {
-			var printFrames = [];
+			/*var printFrames = [];
 			for(var p = 0; p < editor.curve.frames.length; p++) {
 				printFrames.push(JSON.stringify(editor.curve.frames[p]));
 			}
-			alert("[\n\t" + printFrames.join(",\n\t") + "\n]");
+			alert("[\n\t" + printFrames.join(",\n\t") + "\n]");*/
+			alert(JSON.stringify(editor.curve));
 		};
 	}
 	if(this.config.minimizable) {
@@ -679,17 +399,4 @@ MIWeb.Curves.CurveEditor.prototype.renderWindowOptions = function() {
 			editor.draw();
 		};
 	}
-};
-MIWeb.Curves.CurveEditor.prototype.getCurveFrames = function() {
-	if(!this.curve.frames || !this.curve.frames.length) {
-		return [];
-	}
-	
-	var loopCount = 0;
-	if(this.config.drawLoop) {
-		var loopX = this.curve.frames[this.curve.frames.length - 1].point.x;
-		loopCount = this.curveContext.canvasSize.x / this.curveContext.pxPerUnit / loopX;
-	}
-	
-	return this.curve.getFrames(loopCount);
 };
