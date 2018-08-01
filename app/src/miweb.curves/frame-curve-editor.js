@@ -39,6 +39,8 @@ MIWeb.Curves.FrameCurveEditor.prototype.setCurve = function(curve) {
 };
 MIWeb.Curves.FrameCurveEditor.prototype.draw = function() {
 	MIWeb.Curves.CurveEditor.prototype.draw.call(this);
+
+	var editor = this;
 	
 	//drag & drop
 	if(this.config.dragable && this.config.drawControls) {
