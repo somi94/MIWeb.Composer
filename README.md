@@ -25,4 +25,4 @@ If you want to use it as a containerized application, follow the steps below:
 2. Clone or download this directory
 3. Modify the included .env file to your needs (includes container name and port)
 4. Execute the start script via "sudo ./start" or run "docker-compose up" inside the project folder
-5. Open a connection to the app via a modern web browser browser. Using the included .env file should lead to the url "http://localhost:8011".
+5. Open a connection to the app using a modern web browser. If you didn't do changes to the included .env file, the url should be: "http://localhost:8011".
