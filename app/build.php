@@ -9,12 +9,16 @@ $types = [
 	'css' => [
 		'tag' => 'link',
 		'attribute' => 'href',
-		'write' => '<link rel="stylesheet" type="text/css" href="%file%" />'
+		'write' => '<link rel="stylesheet" type="text/css" href="%file%" />',
+		'processor' => null
 	],
 	'js' => [
 		'tag' => 'script',
 		'attribute' => 'src',
-		'write' => '<script type="text/javascript" src="%file%"></script>'
+		'write' => '<script type="text/javascript" src="%file%"></script>',
+		'processor' => function($src) {
+			return $src;	//TODO: minify
+		}
 	]
 ];
 
@@ -54,10 +58,14 @@ foreach($types as $fileType => $type) {
 file_put_contents($dst . $main, $contents);
 
 foreach($builds as $fileType => $fileTypeBuilds) {
+	$fileTypeConfig = $types[$fileType];
 	foreach($fileTypeBuilds as $buildName => $files) {
 		$buildContents = '';
 		foreach($files as $file) {
 			$buildContents .= file_get_contents($src . $file);
+		}
+		if(isset($fileTypeConfig['processor']) && $fileTypeConfig['processor']) {
+			$buildContents = $fileTypeConfig['processor']($buildContents);
 		}
 		file_put_contents($dst . $buildName . '.' . $fileType, $buildContents);
 	}
