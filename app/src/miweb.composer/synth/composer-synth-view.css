@@ -1,0 +1,15 @@
+.curve-container .curve-wrapper {
+	float: left;
+	width: 33.33%;
+}
+
+.curve-container::after {
+	float: none;
+	clear: both;
+	content: " ";
+	display: table;
+}
+
+svg {
+	background-color: #333;
+}

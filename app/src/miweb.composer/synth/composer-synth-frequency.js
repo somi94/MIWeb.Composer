@@ -13,3 +13,8 @@ MIWeb.Composer.Synth.Frequency.prototype.getLength = function() {
 MIWeb.Composer.Synth.Frequency.prototype.getValue = function(x) {
 	return 0;
 };
+MIWeb.Composer.Synth.Frequency.prototype.getControls = function() {
+	return '\
+	\
+	';
+};

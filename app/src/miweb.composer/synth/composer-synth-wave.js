@@ -5,8 +5,8 @@ MIWeb.Composer.Synth = MIWeb.Composer.Synth || {};
 MIWeb.Composer.Synth.Wave = function(base, modifier) {
 	MIWeb.Curves.Curve.call(this);
 	
-	this.base = base || MIWeb.Composer.Synth.Wave.Base.sine;
-	this.modifier = modifier || MIWeb.Composer.Synth.Wave.Modifiers.smooth;
+	this.base = base || 'piano';
+	this.modifier = modifier || 'smooth';
 };
 MIWeb.Composer.Synth.Wave.prototype = Object.create(MIWeb.Curves.Curve.prototype);
 MIWeb.Composer.Synth.Wave.prototype.constructor = MIWeb.Composer.Synth.Wave;
@@ -32,6 +32,20 @@ MIWeb.Composer.Synth.Wave.prototype.getValue = function(x) {
 	var mod = this.getModifier();
 	return mod(base(x));
 };
+MIWeb.Composer.Synth.Wave.prototype.getControls = function() {
+	return '\
+	<select name="base">\
+		<option value="flat" ' + (this.base == 'flat' ? 'selected' : '') + '>Flat</option>\
+		<option value="sine" ' + (this.base == 'sine' ? 'selected' : '') + '>Sine</option>\
+		<option value="piano" ' + (this.base == 'piano' ? 'selected' : '') + '>Piano</option>\
+	</select>\
+	<select name="modifier">\
+		<option value="smooth" ' + (this.base == 'smooth' ? 'selected' : '') + '>Smooth</option>\
+		<option value="blocks" ' + (this.base == 'blocks' ? 'selected' : '') + '>Blocks</option>\
+	</select>\
+	\
+	';
+};
 
 
 MIWeb.Composer.Synth.Wave.Base = {
@@ -39,7 +53,7 @@ MIWeb.Composer.Synth.Wave.Base = {
 		return 0;
 	},
 	sine: function(t) {
-		return Math.sin(t);
+		return Math.sin(2 * Math.PI * t);
 	},
 	piano: function(t) {
 		var f = 1;
@@ -60,6 +74,6 @@ MIWeb.Composer.Synth.Wave.Modifiers = {
 		return v;
 	},
 	blocks: function(t) {
-		return Math.round(v);
+		return Math.round(v * 2) / 2;
 	}
 };

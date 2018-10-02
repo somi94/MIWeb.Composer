@@ -23,4 +23,14 @@ MIWeb.Composer.Synth.Amplitude.prototype.getValue = function(x) {
 	} else if(x > 1 - this.release) {
 		return (1 - (x - (1 - this.release)) / this.release) * this.sustain;
 	}
+	return this.sustain;
+};
+MIWeb.Composer.Synth.Amplitude.prototype.getControls = function() {
+	return '\
+		<label>Attack</label><input name="attack" type="range" min="0" max="1" step="0.01" value="' + this.attack + '" >\
+		<label>Decay</label><input name="decay" type="range" min="0" max="1" step="0.01" value="' + this.decay + '" >\
+		<label>Sustain</label><input name="sustain" type="range" min="0" max="1" step="0.01" value="' + this.sustain + '" >\
+		<label>Release</label><input name="release" type="range" min="0" max="1" step="0.01" value="' + this.release + '" >\
+	\
+	';
 };
