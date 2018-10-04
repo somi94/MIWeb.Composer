@@ -4,6 +4,8 @@ MIWeb.Composer.Synth = MIWeb.Composer.Synth || {};
 
 MIWeb.Composer.Synth.Frequency = function() {
 	MIWeb.Curves.Curve.call(this);
+
+    this.loop = true;
 };
 MIWeb.Composer.Synth.Frequency.prototype = Object.create(MIWeb.Curves.Curve.prototype);
 MIWeb.Composer.Synth.Frequency.prototype.constructor = MIWeb.Composer.Synth.Frequency;

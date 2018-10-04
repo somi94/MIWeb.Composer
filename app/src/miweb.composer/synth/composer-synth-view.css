@@ -1,13 +1,61 @@
+.container.synth,
+.container.synth * {
+	box-sizing: border-box;
+}
+
 .curve-container .curve-wrapper {
 	float: left;
+	padding: 0 10px 0;
 	width: 33.33%;
 }
 
-.curve-container::after {
+.curve-container .curve-title {
+	display: block;
+	font-size: 20px;
+	font-weight: bold;
+	margin: 5px 0;
+}
+
+.curve-container::after,
+.curve-control-wrapper::after {
 	float: none;
 	clear: both;
 	content: " ";
 	display: table;
+}
+
+.curve-view-wrapper {
+	height: 100px;
+	margin: 0 0 10px 0;
+}
+
+.curve-control-wrapper .curve-control-row {
+	float: left;
+	width: 50%;
+}
+
+.curve-control-wrapper .curve-control-row:first-child {
+	padding: 0 5px 0 0;
+}
+
+.curve-control-wrapper .curve-control-row:last-child {
+	padding: 0 0 0 5px;
+}
+
+.curve-control-wrapper label {
+	display: block;
+}
+
+.curve-control-wrapper label span {
+	float: right;
+}
+
+.curve-control-wrapper input,
+.curve-control-wrapper select,
+.curve-control-wrapper textarea {
+	display: block;
+	margin: 0 0 10px 0;
+	width: 100%;
 }
 
 svg {

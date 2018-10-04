@@ -1,5 +1,6 @@
+window.onload = function() {
+    var synthContainer = document.querySelector('.container.synth');
 
-var synthContainer = document.querySelector('.container.synth');
-
-var synth = new MIWeb.Composer.Synth.View(synthContainer);
-synth.debug = false;
+    var synth = new MIWeb.Composer.Synth.View(synthContainer);
+    synth.debug = false;
+};

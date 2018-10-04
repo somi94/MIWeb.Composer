@@ -5,6 +5,9 @@ MIWeb.Audio.Synthesizer = function(wave, amplitude, frequency, note, octave, vol
 	this.wave = wave || new MIWeb.Curves.Curve();
 	this.amplitudeCurve = amplitude || new MIWeb.Curves.Curve();
 	this.frequencyCurve = frequency || new MIWeb.Curves.Curve();
+
+	this.wave.synth = this;
+
 	this.setNote(note || 'C');
 	this.setOctave(octave || 4);
 	this.setVolume(volume || 1);
@@ -79,6 +82,8 @@ MIWeb.Audio.Synthesizer.prototype.generate = function() {
 		var timer = (new Date).valueOf();
 		var minFrequency,maxFrequency,minAmplitude,maxAmplitude,minValue,maxValue;
 	}
+
+	if(this.wave.reset) this.wave.reset();
 	
 	var frequency = this.getFrequency();
 	var sampleCount = this.getSampleCount();

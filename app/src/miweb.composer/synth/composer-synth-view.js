@@ -97,10 +97,12 @@ MIWeb.Composer.Synth.View.prototype.renderCurves = function() {
 	this.renderCurve(curveContainer, this.frequency, 'Frequency');
 };
 MIWeb.Composer.Synth.View.prototype.renderCurve = function(curveContainer, curve, title) {
+	var view = this;
+
 	var curveWrapper = document.createElement('div');
 	curveWrapper.className = 'curve-wrapper';
 	
-	var curveTitle = document.createElement('h2');
+	var curveTitle = document.createElement('span');
 	curveTitle.className = 'curve-title';
 	curveTitle.innerHTML = title;
 	curveWrapper.appendChild(curveTitle);
@@ -119,12 +121,36 @@ MIWeb.Composer.Synth.View.prototype.renderCurve = function(curveContainer, curve
 		controls[c].onchange = function() {
 			var attr = this.getAttribute('name');
 			var val = this.value;
-			
-			curve[attr] = val;
+            var type = this.getAttribute('type');
+
+            if(type == 'range') {
+            	val = parseFloat(val);
+			}
+
+			view.applyOption(curve, attr, val);
 		};
 	}
 	
 	curveContainer.appendChild(curveWrapper);
+
+	curve.element = curveWrapper;
+};
+MIWeb.Composer.Synth.View.prototype.applyOption = function(curve, option, val) {
+	curve[option] = val;
+
+	var curveContainer = curve.element;
+
+	var controls = curveContainer.querySelectorAll('.curve-control-wrapper [name="' + option + '"]');
+	for(var c = 0; c < controls.length; c++) {
+		controls[c].value = val;
+    }
+
+	var valueViews = curveContainer.querySelectorAll('.value-' + option);
+	for(var v = 0; v < valueViews.length; v++) {
+		valueViews[v].innerHTML = val;
+	}
+
+	curveContainer.querySelector('.curve-view-wrapper').curveView.render();
 };
 MIWeb.Composer.Synth.View.prototype.renderKeyboard = function() {
 	var keyboardWrapper = document.createElement('div');
